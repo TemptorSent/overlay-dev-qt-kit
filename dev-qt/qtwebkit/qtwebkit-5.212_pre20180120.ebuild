@@ -3,16 +3,15 @@
 
 EAPI=6
 
-COMMIT=72cfbd7664f21fcc0e62b869a6b01bf73eb5e7da
 CMAKE_MAKEFILE_GENERATOR="ninja"
 PYTHON_COMPAT=( python2_7 )
 USE_RUBY="ruby23 ruby24 ruby25"
 
 inherit check-reqs cmake-utils flag-o-matic python-any-r1 qmake-utils ruby-single toolchain-funcs
-
+MY_PV="${PV%%_p*}"
 DESCRIPTION="WebKit rendering library for the Qt5 framework (deprecated)"
 HOMEPAGE="https://www.qt.io/"
-SRC_URI="http://code.qt.io/cgit/qt/${PN}.git/snapshot/${COMMIT}.tar.gz -> ${P}.tar.gz"
+SRC_URI="http://download.qt.io/snapshots/ci/${PN}/${MY_PV}/latest/src/submodules/${PN}-everywhere-src-${MY_PV}.tar.xz -> ${PN}-everywhere-src-${PV}.tar.xz"
 
 LICENSE="BSD LGPL-2+"
 SLOT="5/5.212"
