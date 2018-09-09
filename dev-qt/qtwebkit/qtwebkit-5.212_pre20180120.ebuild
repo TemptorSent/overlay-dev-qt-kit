@@ -11,7 +11,8 @@ inherit check-reqs cmake-utils flag-o-matic python-any-r1 qmake-utils ruby-singl
 MY_PV="${PV%%_p*}"
 DESCRIPTION="WebKit rendering library for the Qt5 framework (deprecated)"
 HOMEPAGE="https://www.qt.io/"
-SRC_URI="http://download.qt.io/snapshots/ci/${PN}/${MY_PV}/latest/src/submodules/${PN}-everywhere-src-${MY_PV}.tar.xz -> ${PN}-everywhere-src-${PV}.tar.xz"
+QT_PKGNAME="${PN}-everywhere-src-${MY_PV}"
+SRC_URI="http://download.qt.io/snapshots/ci/${PN}/${MY_PV}/latest/src/submodules/${QT_PKGNAME}.tar.xz -> ${QT_PKGNAME%${MY_PV}}${PV}.tar.xz"
 
 LICENSE="BSD LGPL-2+"
 SLOT="5/5.212"
@@ -73,7 +74,7 @@ DEPEND="${RDEPEND}
 	virtual/pkgconfig
 "
 
-S=${WORKDIR}/${COMMIT}
+S=${WORKDIR}/${QT_PKGNAME}
 
 PATCHES=( "${FILESDIR}/${P}-functional.patch" )
 
