@@ -15,9 +15,9 @@ SRC_URI="http://download.qt.io/official_releases/QtForPython/pyside2/PySide2-5.1
 # version 1.0 of a Qt-specific exception enabling shiboken2 output to be
 # arbitrarily relicensed. (TODO)
 LICENSE="|| ( GPL-2 GPL-3+ LGPL-3 ) GPL-3"
-SLOT="2"
+SLOT="2/2.0.0"
 KEYWORDS="*"
-IUSE="numpy test"
+IUSE=" test"
 REQUIRED_USE="${PYTHON_REQUIRED_USE}"
 
 # Minimum version of Qt required.
@@ -30,8 +30,8 @@ DEPEND="
 	>=dev-qt/qtcore-${QT_PV}
 	>=dev-qt/qtxml-${QT_PV}
 	>=dev-qt/qtxmlpatterns-${QT_PV}
-	=sys-devel/clang-6*
-	numpy? ( dev-python/numpy )
+	>=sys-devel/clang-3.9
+	dev-python/numpy
 "
 RDEPEND="${DEPEND}"
 
@@ -45,11 +45,6 @@ llvm_check_deps() {
 }
 
 src_prepare() {
-	#FIXME: File an upstream issue requesting a sane way to disable NumPy support.
-	if ! use numpy; then
-		sed -i -e '/print(os\.path\.realpath(numpy))/d' libshiboken/CMakeLists.txt || die
-	fi
-
 	if use prefix; then
 		cp "${FILESDIR}"/rpath.cmake . || die
 		sed -i -e '1iinclude(rpath.cmake)' CMakeLists.txt || die
