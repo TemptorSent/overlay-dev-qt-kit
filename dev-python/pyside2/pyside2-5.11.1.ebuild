@@ -16,7 +16,7 @@ SLOT="2"
 KEYWORDS="*"
 
 # TODO: speech
-IUSE="charts concurrent datavis declarative designer gui help multimedia
+IUSE="3d charts concurrent datavis declarative designer gui help multimedia
 	network opengl printsupport script scripttools sql svg test testlib
 	webchannel webengine webkit websockets widgets x11extras xmlpatterns"
 
@@ -30,7 +30,7 @@ REQUIRED_USE="
 	designer? ( widgets )
 	help? ( widgets )
 	multimedia? ( gui network )
-	opengl? ( widgets )
+	opengl? ( x11extras widgets )
 	printsupport? ( widgets )
 	scripttools? ( gui script widgets )
 	sql? ( widgets )
@@ -54,6 +54,7 @@ DEPEND="
 	>=dev-qt/qtxml-${QT_PV}
 	>=dev-qt/qtlocation-${QT_PV}
 	>=dev-qt/qtpositioning-${QT_PV}
+	3d? ( >=dev-qt/qt3d-${QT_PV} )
 	charts? ( >=dev-qt/qtcharts-${QT_PV} )
 	concurrent? ( >=dev-qt/qtconcurrent-${QT_PV} )
 	datavis? ( >=dev-qt/qtdatavis3d-${QT_PV} )
@@ -78,6 +79,8 @@ DEPEND="
 	xmlpatterns? ( >=dev-qt/qtxmlpatterns-${QT_PV} )
 "
 RDEPEND="${DEPEND}"
+
+PATCHES=( "${FILESDIR}/pyside2-5.11.1-qtgui-make-gl-time-classes-optional.patch" )
 
 S=${WORKDIR}/${TARBALL_VER}/sources/pyside2
 

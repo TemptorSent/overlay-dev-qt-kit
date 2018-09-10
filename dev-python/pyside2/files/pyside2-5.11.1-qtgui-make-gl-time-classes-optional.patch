@@ -1,0 +1,65 @@
+From 83b42ca06c834ad07985397764ebe2d7a58234ce Mon Sep 17 00:00:00 2001
+From: Friedemann Kleint <Friedemann.Kleint@qt.io>
+Date: Wed, 1 Aug 2018 09:09:08 +0200
+Subject: [PATCH] PySide2/QtGui: Fix build of Debian/armel,armh (OpenGL ES 2)
+
+Add optional class checks to QtGui and use them for
+QOpenGLTimeMonitor and QOpenGLTimerQuery.
+
+Task-number: PYSIDE-764
+Change-Id: Ib33ec1d64c40f53aa31059e4ca9422707636375d
+Reviewed-by: Christian Tismer <tismer@stackless.com>
+---
+ sources/pyside2/PySide2/QtGui/CMakeLists.txt | 15 +++++++++++----
+ 1 file changed, 11 insertions(+), 4 deletions(-)
+
+diff --git a/PySide2/QtGui/CMakeLists.txt b/PySide2/QtGui/CMakeLists.txt
+index bee58bde2..1fe743c01 100644
+--- a/PySide2/QtGui/CMakeLists.txt
++++ b/PySide2/QtGui/CMakeLists.txt
+@@ -2,6 +2,12 @@ project(QtGui)
+ 
+ qt5_wrap_cpp(QPYTEXTOBJECT_MOC "${pyside2_SOURCE_DIR}/qpytextobject.h")
+ 
++set(QtGui_OPTIONAL_SRC)
++set(QtGui_DROPPED_ENTRIES)
++
++check_qt_class(QtGui QOpenGLTimeMonitor QtGui_OPTIONAL_SRC QtGui_DROPPED_ENTRIES)
++check_qt_class(QtGui QOpenGLTimerQuery  QtGui_OPTIONAL_SRC QtGui_DROPPED_ENTRIES)
++
+ set(QtGui_SRC
+ ${QtGui_GEN_DIR}/qabstractopenglfunctions_wrapper.cpp
+ ${QtGui_GEN_DIR}/qabstracttextdocumentlayout_paintcontext_wrapper.cpp
+@@ -96,8 +102,6 @@ ${QtGui_GEN_DIR}/qopenglpixeltransferoptions_wrapper.cpp
+ ${QtGui_GEN_DIR}/qopenglshaderprogram_wrapper.cpp
+ ${QtGui_GEN_DIR}/qopengltexture_wrapper.cpp
+ ${QtGui_GEN_DIR}/qopengltextureblitter_wrapper.cpp
+-${QtGui_GEN_DIR}/qopengltimemonitor_wrapper.cpp
+-${QtGui_GEN_DIR}/qopengltimerquery_wrapper.cpp
+ ${QtGui_GEN_DIR}/qopenglversionprofile_wrapper.cpp
+ ${QtGui_GEN_DIR}/qopenglvertexarrayobject_wrapper.cpp
+ ${QtGui_GEN_DIR}/qopenglvertexarrayobject_binder_wrapper.cpp
+@@ -203,7 +207,7 @@ ${QtGui_GEN_DIR}/qwhatsthisclickedevent_wrapper.cpp
+ ${QtGui_GEN_DIR}/qwheelevent_wrapper.cpp
+ ${QtGui_GEN_DIR}/qwindow_wrapper.cpp
+ ${QtGui_GEN_DIR}/qwindowstatechangeevent_wrapper.cpp
+-
++${QtGui_OPTIONAL_SRC}
+ # module is always needed
+ ${QtGui_GEN_DIR}/qtgui_module_wrapper.cpp
+ )
+@@ -237,7 +241,10 @@ create_pyside_module(QtGui
+                      QtGui_SOURCE_DIR
+                      QtGui_SRC
+                      QPYTEXTOBJECT_MOC
+-                     ${QtGui_BINARY_DIR}/typesystem_gui.xml)
++                     ${QtGui_BINARY_DIR}/typesystem_gui.xml
++                     ""
++                     ""
++                     QtGui_DROPPED_ENTRIES)
+ 
+ install(FILES ${pyside2_SOURCE_DIR}/qpytextobject.h DESTINATION include/PySide2/QtGui/)
+ 
+-- 
+2.16.3
+
