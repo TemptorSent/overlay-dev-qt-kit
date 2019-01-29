@@ -1,4 +1,4 @@
-# Copyright 1999-2018 Gentoo Foundation
+# Copyright 1999-2018 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 
 EAPI=6
@@ -11,7 +11,8 @@ if [[ ${QT5_BUILD_TYPE} == release ]]; then
 	KEYWORDS="~amd64 ~arm ~arm64 ~x86"
 fi
 
-IUSE="alsa bindist designer geolocation pax_kernel pulseaudio +system-ffmpeg +system-icu widgets"
+IUSE="alsa bindist designer geolocation jumbo-build pax_kernel pulseaudio
+	+system-ffmpeg +system-icu widgets"
 REQUIRED_USE="designer? ( widgets )"
 
 RDEPEND="
@@ -33,13 +34,13 @@ RDEPEND="
 	media-libs/fontconfig
 	media-libs/freetype
 	media-libs/harfbuzz:=
+	media-libs/lcms:2
 	media-libs/libjpeg-turbo:=
 	media-libs/libpng:0=
 	>=media-libs/libvpx-1.5:=[svc]
 	media-libs/libwebp:=
 	media-libs/mesa[egl]
 	media-libs/opus
-	net-libs/libsrtp:0=
 	sys-apps/dbus
 	sys-apps/pciutils
 	sys-libs/libcap
@@ -80,14 +81,19 @@ DEPEND="${RDEPEND}
 
 PATCHES+=(
 	"${FILESDIR}/${PN}-5.9.6-gcc8.patch" # bug 657124
-	"${FILESDIR}/${P}-libxml2-disable-catalogs.patch" # bug 653078
-	"${FILESDIR}/${P}-ffmpeg4.patch"
-	"${FILESDIR}/${P}-eglGetProcAddress-fallback-lookup.patch" # 5.11 branch
-	"${FILESDIR}/${P}-nouveau-disable-gpu.patch" # bug 609752
+	"${FILESDIR}/${PN}-5.12.0-nouveau-disable-gpu.patch" # bug 609752
+	"${FILESDIR}/${PN}-5.12.0-skcms-update.patch" # bump skcms repo to fix build failure (gcc8)
 )
 
 src_prepare() {
-	use pax_kernel && PATCHES+=( "${FILESDIR}/${PN}-5.9.3-paxmark-mksnapshot.patch" )
+	use pax_kernel && PATCHES+=( "${FILESDIR}/${PN}-5.11.2-paxmark-mksnapshot.patch" )
+	# Fix double-include
+	sed -e '/#include "skcms.h"/d' -i "src/3rdparty/chromium/third_party/skia/third_party/skcms/skcms.cc" || die
+
+	if ! use jumbo-build; then
+		sed -i -e 's|use_jumbo_build=true|use_jumbo_build=false|' \
+			src/core/config/common.pri || die
+	fi
 
 	# bug 620444 - ensure local headers are used
 	find "${S}" -type f -name "*.pr[fio]" | xargs sed -i -e 's|INCLUDEPATH += |&$$QTWEBENGINE_ROOT/include |' || die
