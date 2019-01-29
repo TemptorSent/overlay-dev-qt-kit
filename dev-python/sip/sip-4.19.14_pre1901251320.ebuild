@@ -7,28 +7,24 @@ PYTHON_COMPAT=( python2_7 python3_{4,5,6,7} )
 
 inherit python-r1 toolchain-funcs
 
-DESCRIPTION="Private sip for PyQt5 - Python extension module generator for C and C++ libraries"
+DESCRIPTION="Python extension module generator for C and C++ libraries"
 HOMEPAGE="https://www.riverbankcomputing.com/software/sip/intro"
 
 LICENSE="|| ( GPL-2 GPL-3 SIP )"
 KEYWORDS="~alpha ~amd64 ~arm ~arm64 ~hppa ~ia64 ~ppc ~ppc64 ~sparc ~x86 ~x86-fbsd ~amd64-linux ~x86-linux ~ppc-macos ~x64-macos ~x86-macos"
 
-SIP_PN="sip"
-MY_MOD="${PN%_${SIP_PN}}"
-SIP_P="${SIP_PN}-${PV}"
 if [[ ${PV} == *9999 ]]; then
 	KEYWORDS=""
 	SRC_URI=""
 	inherit mercurial
 	EHG_REPO_URI="https://www.riverbankcomputing.com/hg/sip"
 elif [[ ${PV} == *_pre* ]]; then
-	SIP_P="${SIP_P/_pre/.dev}"
-	SRC_URI="https://www.riverbankcomputing.com/static/Downloads/sip/${SIP_P}.tar.gz"
+	MY_P=${P/_pre/.dev}
+	SRC_URI="https://www.riverbankcomputing.com/static/Downloads/${PN}/${MY_P}.tar.gz"
+	S=${WORKDIR}/${MY_P}
 else
-	SRC_URI="mirror://sourceforge/pyqt/${SIP_P}.tar.gz"
+	SRC_URI="mirror://sourceforge/pyqt/${P}.tar.gz"
 fi
-
-S="${WORKDIR}/${SIP_P}"
 
 # Sub-slot based on SIP_API_MAJOR_NR from siplib/sip.h
 SLOT="0/12"
@@ -36,9 +32,7 @@ SLOT="0/12"
 IUSE="debug doc"
 
 RDEPEND="${PYTHON_DEPS}"
-DEPEND="${RDEPEND}
-	>=dev-python/${SIP_PN}-${PV}:=[${PYTHON_USEDEP}]
-"
+DEPEND="${RDEPEND}"
 if [[ ${PV} == *9999 ]]; then
 	DEPEND+="
 		sys-devel/bison
@@ -51,12 +45,15 @@ if [[ ${PV} == *9999 ]]; then
 	REQUIRED_USE+=" || ( $(python_gen_useflags 'python2*') )"
 fi
 
-PATCHES=( "${FILESDIR}"/${SIP_PN}-4.18-darwin.patch )
+PATCHES=( "${FILESDIR}"/${PN}-4.18-darwin.patch )
 
 src_prepare() {
 	if [[ ${PV} == *9999 ]]; then
 		python_setup 'python2*'
 		"${PYTHON}" build.py prepare || die
+		if use doc; then
+			"${PYTHON}" build.py doc || die
+		fi
 	fi
 
 	# Sub-slot sanity check
@@ -99,8 +96,6 @@ src_configure() {
 			RANLIB=
 			STRIP=
 			$(usex debug --debug '')
-			--sip-module=PyQt5.sip
-			--no-tools
 		)
 		echo "${myconf[@]}"
 
@@ -120,4 +115,6 @@ src_install() {
 	}
 	python_foreach_impl run_in_build_dir installation
 
+	einstalldocs
+	use doc && dodoc -r doc/html
 }

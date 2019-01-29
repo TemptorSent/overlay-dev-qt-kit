@@ -11,7 +11,7 @@ HOMEPAGE="https://www.riverbankcomputing.com/software/pyqt/intro"
 
 MY_P=${PN}_gpl-${PV/_pre/.dev}
 if [[ ${PV} == *_pre* ]]; then
-	SRC_URI="https://www.riverbankcomputing.com/static/Downloads/${PN}/${MY_P}.tar.gz"
+	SRC_URI="https://dev.gentoo.org/~pesa/distfiles/${MY_P}.tar.xz"
 else
 	SRC_URI="mirror://sourceforge/pyqt/${MY_P}.tar.gz"
 fi
@@ -20,36 +20,34 @@ LICENSE="GPL-3"
 SLOT="0"
 KEYWORDS="amd64 ~arm ~arm64 ~ppc ~ppc64 x86"
 
-IUSE="bluetooth dbus designer gui help location
-	multimedia network networkauth nfc opengl positioning printsupport declarative sensors serialport sql svg
+# TODO: QtNetworkAuth, QtNfc
+IUSE="bluetooth dbus debug declarative designer examples gles2 gui help location
+	multimedia network opengl positioning printsupport sensors serialport sql svg
 	testlib webchannel webengine webkit websockets widgets x11extras xmlpatterns"
-# Note: USE="gles2" disables Desktop OpenGL functionality and is mutually exclusive!
-IUSE="${IUSE} debug examples gles2"
 
 # The requirements below were extracted from configure.py
 # and from the output of 'grep -r "%Import " "${S}"/sip'
 REQUIRED_USE="
 	${PYTHON_REQUIRED_USE}
 	bluetooth? ( gui )
-	designer? ( gui )
+	declarative? ( gui network )
+	designer? ( widgets )
 	help? ( gui widgets )
 	location? ( positioning )
 	multimedia? ( gui network )
-	networkauth? ( network )
-	opengl? ( gui )
+	opengl? ( gui widgets )
 	positioning? ( gui )
-	printsupport? ( gui )
-	declarative? ( gui )
+	printsupport? ( gui widgets )
 	sensors? ( gui )
 	serialport? ( gui )
-	sql? ( gui widgets )
-	svg? ( gui )
-	testlib? ( gui widgets )
+	sql? ( widgets )
+	svg? ( gui widgets )
+	testlib? ( widgets )
 	webchannel? ( network )
-	webengine? ( widgets? ( network printsupport webchannel ) )
-	webkit? ( gui network widgets? ( printsupport ) )
+	webengine? ( network widgets? ( printsupport webchannel ) )
+	webkit? ( gui network printsupport widgets )
+	websockets? ( network )
 	widgets? ( gui )
-	x11extras? ( gui )
 	xmlpatterns? ( network )
 "
 
@@ -58,7 +56,7 @@ QT_PV="5.9.4:5"
 
 RDEPEND="
 	${PYTHON_DEPS}
-	>=dev-python/sip-4.19.11:=[${PYTHON_USEDEP}]
+	>=dev-python/sip-4.19.6:=[${PYTHON_USEDEP}]
 	>=dev-qt/qtcore-${QT_PV}
 	>=dev-qt/qtxml-${QT_PV}
 	bluetooth? ( >=dev-qt/qtbluetooth-${QT_PV} )
@@ -90,27 +88,23 @@ RDEPEND="
 	xmlpatterns? ( >=dev-qt/qtxmlpatterns-${QT_PV} )
 "
 DEPEND="${RDEPEND}
+	dev-python/${PN}_sip
 	dbus? ( virtual/pkgconfig )
 "
-#dev-python/${PN}_sip
 
-S="${WORKDIR}/${MY_P}"
+S=${WORKDIR}/${MY_P}
 
 DOCS=( "${S}"/{ChangeLog,NEWS} )
 
 pyqt_use_enable() {
-	local mode="disable"
-	use "$1" && mode="enable"
-	shift
-	while [ $# -gt 0 ] ; do
-		printf -- ' --%s=%s' "${mode}" "${1}"
-		shift
-	done
-}
+	use "$1" || return
 
-src_prepare() {
-	default
-	python_copy_sources
+	if [[ $# -eq 1 ]]; then
+		echo --enable=Qt$(tr 'a-z' 'A-Z' <<< ${1:0:1})${1:1}
+	else
+		shift
+		echo ${@/#/--enable=}
+	fi
 }
 
 src_configure() {
@@ -125,45 +119,43 @@ src_configure() {
 			--bindir="${EPREFIX}/usr/bin"
 			--destdir="$(python_get_sitedir)"
 			--sip-incdir="$(python_get_includedir)"
+			--sipdir="$(python_get_sitedir)/${PN}}"
 			--qsci-api
-			--no-dist-info
-			$(pyqt_use_enable bluetooth QtBluetooth)
 			--enable=QtCore
+			--enable=QtXml
+			$(pyqt_use_enable bluetooth)
 			$(pyqt_use_enable dbus QtDBus)
 			$(usex dbus '' --no-python-dbus)
-			$(pyqt_use_enable designer QtDesigner)
-			$(usex designer '' --no-designer-plugin)
-			$(pyqt_use_enable gui QtGui)
-			$(pyqt_use_enable gui $(use gles2 && echo _QOpenGLFunctions_ES2 || echo _QOpenGLFunctions_{2_{0,1},4_1_Core}))
-			$(pyqt_use_enable help QtHelp)
-			$(pyqt_use_enable location QtLocation)
-			$(pyqt_use_enable multimedia QtMultimedia $(usex widgets QtMultimediaWidgets ''))
-			$(pyqt_use_enable network QtNetwork $(usex networkauth QtNetworkAuth ''))
-			$(pyqt_use_enable nfc QtNfc)
-			$(pyqt_use_enable opengl QtOpenGL)
-			$(pyqt_use_enable positioning QtPositioning)
-			$(pyqt_use_enable printsupport QtPrintSupport)
 			$(pyqt_use_enable declarative QtQml QtQuick $(usex widgets QtQuickWidgets ''))
 			$(usex declarative '' --no-qml-plugin)
-			$(pyqt_use_enable sensors QtSensors)
+			$(pyqt_use_enable designer)
+			$(usex designer '' --no-designer-plugin)
+			$(pyqt_use_enable gui)
+			$(pyqt_use_enable gui $(use gles2 && echo _QOpenGLFunctions_ES2 || echo _QOpenGLFunctions_{2_0,2_1,4_1_Core}))
+			$(pyqt_use_enable help)
+			$(pyqt_use_enable location)
+			$(pyqt_use_enable multimedia QtMultimedia $(usex widgets QtMultimediaWidgets ''))
+			$(pyqt_use_enable network)
+			$(pyqt_use_enable opengl QtOpenGL)
+			$(pyqt_use_enable positioning)
+			$(pyqt_use_enable printsupport QtPrintSupport)
+			$(pyqt_use_enable sensors)
 			$(pyqt_use_enable serialport QtSerialPort)
-			$(pyqt_use_enable sql QtSql)
-			$(pyqt_use_enable svg QtSvg)
+			$(pyqt_use_enable sql)
+			$(pyqt_use_enable svg)
 			$(pyqt_use_enable testlib QtTest)
 			$(pyqt_use_enable webchannel QtWebChannel)
 			$(pyqt_use_enable webengine QtWebEngine QtWebEngineCore $(usex widgets QtWebEngineWidgets ''))
 			$(pyqt_use_enable webkit QtWebKit QtWebKitWidgets)
 			$(pyqt_use_enable websockets QtWebSockets)
-			$(pyqt_use_enable widgets QtWidgets)
+			$(pyqt_use_enable widgets)
 			$(pyqt_use_enable x11extras QtX11Extras)
-			--enable=QtXml
 			$(pyqt_use_enable xmlpatterns QtXmlPatterns)
 		)
 		echo "${myconf[@]}"
 		"${myconf[@]}" || die
 
-		#	MAKEOPTS="-j1" eqmake5 -recursive ${PN}.pro
-		#emake
+		eqmake5 -recursive ${PN}.pro
 	}
 	python_foreach_impl run_in_build_dir configuration
 }
@@ -174,29 +166,24 @@ src_compile() {
 
 src_install() {
 	installation() {
-		#local tmp_root=${D%/}/tmp
-		#emake INSTALL_ROOT="${tmp_root}" install
-		#
-		#local bin_dir=${tmp_root}${EPREFIX}/usr/bin
-		MAKOPTS="-j1" emake install INSTALL_ROOT="${ED}" DESTDIR="${ED}"
+		local tmp_root=${D%/}/tmp
+		emake INSTALL_ROOT="${tmp_root}" install
 
-		local myroot="${WORKDIR}/${P}-${EPYTHON}-imagetmp"
-		mkdir -p "${myroot}"
-		( set +f ; mv "${D}"/* "${myroot}" )
+		local bin_dir=${tmp_root}${EPREFIX}/usr/bin
 		local exe
 		for exe in pylupdate5 pyrcc5 pyuic5; do
-			python_doexe "${myroot}${EPREFIX}/usr/bin/${exe}"
-			rm "${myroot}${EPREFIX}/usr/bin/${exe}" || die
+			python_doexe "${bin_dir}/${exe}"
+			rm "${bin_dir}/${exe}" || die
 		done
 
-		local uic_dir="${myroot}$(python_get_sitedir)/${PN}/uic"
+		local uic_dir=${tmp_root}$(python_get_sitedir)/${PN}/uic
 		if python_is_python3; then
 			rm -r "${uic_dir}"/port_v2 || die
 		else
 			rm -r "${uic_dir}"/port_v3 || die
 		fi
 
-		multibuild_merge_root "${myroot}" "${D}"
+		multibuild_merge_root "${tmp_root}" "${D}"
 		python_optimize
 	}
 	python_foreach_impl run_in_build_dir installation

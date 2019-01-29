@@ -20,36 +20,34 @@ LICENSE="GPL-3"
 SLOT="0"
 KEYWORDS="amd64 ~arm ~arm64 ~ppc ~ppc64 x86"
 
-IUSE="bluetooth dbus designer gui help location
-	multimedia network networkauth nfc opengl positioning printsupport declarative sensors serialport sql svg
+# TODO: QtNetworkAuth, QtNfc
+IUSE="bluetooth dbus debug declarative designer examples gles2 gui help location
+	multimedia network opengl positioning printsupport sensors serialport sql svg
 	testlib webchannel webengine webkit websockets widgets x11extras xmlpatterns"
-# Note: USE="gles2" disables Desktop OpenGL functionality and is mutually exclusive!
-IUSE="${IUSE} debug examples gles2"
 
 # The requirements below were extracted from configure.py
 # and from the output of 'grep -r "%Import " "${S}"/sip'
 REQUIRED_USE="
 	${PYTHON_REQUIRED_USE}
 	bluetooth? ( gui )
-	designer? ( gui )
+	declarative? ( gui network )
+	designer? ( widgets )
 	help? ( gui widgets )
 	location? ( positioning )
 	multimedia? ( gui network )
-	networkauth? ( network )
-	opengl? ( gui )
+	opengl? ( gui widgets )
 	positioning? ( gui )
-	printsupport? ( gui )
-	declarative? ( gui )
+	printsupport? ( gui widgets )
 	sensors? ( gui )
 	serialport? ( gui )
-	sql? ( gui widgets )
-	svg? ( gui )
-	testlib? ( gui widgets )
+	sql? ( widgets )
+	svg? ( gui widgets )
+	testlib? ( widgets )
 	webchannel? ( network )
-	webengine? ( widgets? ( network printsupport webchannel ) )
-	webkit? ( gui network widgets? ( printsupport ) )
+	webengine? ( network widgets? ( printsupport webchannel ) )
+	webkit? ( gui network printsupport widgets )
+	websockets? ( network )
 	widgets? ( gui )
-	x11extras? ( gui )
 	xmlpatterns? ( network )
 "
 
@@ -58,7 +56,7 @@ QT_PV="5.9.4:5"
 
 RDEPEND="
 	${PYTHON_DEPS}
-	>=dev-python/sip-4.19.11:=[${PYTHON_USEDEP}]
+	>=dev-python/sip-4.19.6:=[${PYTHON_USEDEP}]
 	>=dev-qt/qtcore-${QT_PV}
 	>=dev-qt/qtxml-${QT_PV}
 	bluetooth? ( >=dev-qt/qtbluetooth-${QT_PV} )
@@ -90,22 +88,23 @@ RDEPEND="
 	xmlpatterns? ( >=dev-qt/qtxmlpatterns-${QT_PV} )
 "
 DEPEND="${RDEPEND}
+	dev-python/${PN}_sip
 	dbus? ( virtual/pkgconfig )
 "
-#dev-python/${PN}_sip
 
-S="${WORKDIR}/${MY_P}"
+S=${WORKDIR}/${MY_P}
 
 DOCS=( "${S}"/{ChangeLog,NEWS} )
 
 pyqt_use_enable() {
-	local mode="disable"
-	use "$1" && mode="enable"
-	shift
-	while [ $# -gt 0 ] ; do
-		printf -- ' --%s=%s' "${mode}" "${1}"
+	use "$1" || return
+
+	if [[ $# -eq 1 ]]; then
+		echo --enable=Qt$(tr 'a-z' 'A-Z' <<< ${1:0:1})${1:1}
+	else
 		shift
-	done
+		echo ${@/#/--enable=}
+	fi
 }
 
 src_prepare() {
@@ -125,39 +124,39 @@ src_configure() {
 			--bindir="${EPREFIX}/usr/bin"
 			--destdir="$(python_get_sitedir)"
 			--sip-incdir="$(python_get_includedir)"
+#			--sipdir="$(python_get_sitedir)/${PN}/sip"
 			--qsci-api
 			--no-dist-info
-			$(pyqt_use_enable bluetooth QtBluetooth)
-			--enable=QtCore
-			$(pyqt_use_enable dbus QtDBus)
+#			--enable=QtCore
+#			--enable=QtXml
+#			$(pyqt_use_enable bluetooth)
+#			$(pyqt_use_enable dbus QtDBus)
 			$(usex dbus '' --no-python-dbus)
-			$(pyqt_use_enable designer QtDesigner)
-			$(usex designer '' --no-designer-plugin)
-			$(pyqt_use_enable gui QtGui)
-			$(pyqt_use_enable gui $(use gles2 && echo _QOpenGLFunctions_ES2 || echo _QOpenGLFunctions_{2_{0,1},4_1_Core}))
-			$(pyqt_use_enable help QtHelp)
-			$(pyqt_use_enable location QtLocation)
-			$(pyqt_use_enable multimedia QtMultimedia $(usex widgets QtMultimediaWidgets ''))
-			$(pyqt_use_enable network QtNetwork $(usex networkauth QtNetworkAuth ''))
-			$(pyqt_use_enable nfc QtNfc)
-			$(pyqt_use_enable opengl QtOpenGL)
-			$(pyqt_use_enable positioning QtPositioning)
-			$(pyqt_use_enable printsupport QtPrintSupport)
-			$(pyqt_use_enable declarative QtQml QtQuick $(usex widgets QtQuickWidgets ''))
+#			$(pyqt_use_enable declarative QtQml QtQuick $(usex widgets QtQuickWidgets ''))
 			$(usex declarative '' --no-qml-plugin)
-			$(pyqt_use_enable sensors QtSensors)
-			$(pyqt_use_enable serialport QtSerialPort)
-			$(pyqt_use_enable sql QtSql)
-			$(pyqt_use_enable svg QtSvg)
-			$(pyqt_use_enable testlib QtTest)
-			$(pyqt_use_enable webchannel QtWebChannel)
-			$(pyqt_use_enable webengine QtWebEngine QtWebEngineCore $(usex widgets QtWebEngineWidgets ''))
-			$(pyqt_use_enable webkit QtWebKit QtWebKitWidgets)
-			$(pyqt_use_enable websockets QtWebSockets)
-			$(pyqt_use_enable widgets QtWidgets)
-			$(pyqt_use_enable x11extras QtX11Extras)
-			--enable=QtXml
-			$(pyqt_use_enable xmlpatterns QtXmlPatterns)
+#			$(pyqt_use_enable designer)
+			$(usex designer '' --no-designer-plugin)
+#			$(pyqt_use_enable gui)
+#			$(pyqt_use_enable gui $(use gles2 && echo _QOpenGLFunctions_ES2 || echo _QOpenGLFunctions_{2_0,2_1,4_1_Core}))
+#			$(pyqt_use_enable help)
+#			$(pyqt_use_enable location)
+#			$(pyqt_use_enable multimedia QtMultimedia $(usex widgets QtMultimediaWidgets ''))
+#			$(pyqt_use_enable network)
+#			$(pyqt_use_enable opengl QtOpenGL)
+#			$(pyqt_use_enable positioning)
+#			$(pyqt_use_enable printsupport QtPrintSupport)
+#			$(pyqt_use_enable sensors)
+#			$(pyqt_use_enable serialport QtSerialPort)
+#			$(pyqt_use_enable sql)
+#			$(pyqt_use_enable svg)
+#			$(pyqt_use_enable testlib QtTest)
+#			$(pyqt_use_enable webchannel QtWebChannel)
+#			$(pyqt_use_enable webengine QtWebEngine QtWebEngineCore $(usex widgets QtWebEngineWidgets ''))
+#			$(pyqt_use_enable webkit QtWebKit QtWebKitWidgets)
+#			$(pyqt_use_enable websockets QtWebSockets)
+#			$(pyqt_use_enable widgets)
+#			$(pyqt_use_enable x11extras QtX11Extras)
+#			$(pyqt_use_enable xmlpatterns QtXmlPatterns)
 		)
 		echo "${myconf[@]}"
 		"${myconf[@]}" || die

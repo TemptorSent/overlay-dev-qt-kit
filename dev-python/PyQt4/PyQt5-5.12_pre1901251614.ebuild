@@ -9,8 +9,8 @@ inherit multibuild python-r1 qmake-utils
 DESCRIPTION="Python bindings for the Qt framework"
 HOMEPAGE="https://www.riverbankcomputing.com/software/pyqt/intro"
 
-MY_P=${PN}_gpl-${PV/_pre/.dev}
-if [[ ${PV} == *_pre* ]]; then
+MY_P="${PN}_gpl-${PV/_pre/.dev}"
+if [[ "${PV}" == *_pre* ]]; then
 	SRC_URI="https://www.riverbankcomputing.com/static/Downloads/${PN}/${MY_P}.tar.gz"
 else
 	SRC_URI="mirror://sourceforge/pyqt/${MY_P}.tar.gz"
@@ -21,8 +21,8 @@ SLOT="0"
 KEYWORDS="amd64 ~arm ~arm64 ~ppc ~ppc64 x86"
 
 IUSE="bluetooth dbus designer gui help location
-	multimedia network networkauth nfc opengl positioning printsupport declarative sensors serialport sql svg
-	testlib webchannel webengine webkit websockets widgets x11extras xmlpatterns"
+	multimedia network networkauth nfc opengl positioning printsupport declarative remoteobjects sensors serialport sql svg
+	testlib webchannel webkit websockets widgets x11extras xmlpatterns"
 # Note: USE="gles2" disables Desktop OpenGL functionality and is mutually exclusive!
 IUSE="${IUSE} debug examples gles2"
 
@@ -46,7 +46,6 @@ REQUIRED_USE="
 	svg? ( gui )
 	testlib? ( gui widgets )
 	webchannel? ( network )
-	webengine? ( widgets? ( network printsupport webchannel ) )
 	webkit? ( gui network widgets? ( printsupport ) )
 	widgets? ( gui )
 	x11extras? ( gui )
@@ -58,7 +57,7 @@ QT_PV="5.9.4:5"
 
 RDEPEND="
 	${PYTHON_DEPS}
-	>=dev-python/sip-4.19.11:=[${PYTHON_USEDEP}]
+	>=dev-python/PyQt5_sip-4.19.14_pre1901251320:=[${PYTHON_USEDEP}]
 	>=dev-qt/qtcore-${QT_PV}
 	>=dev-qt/qtxml-${QT_PV}
 	bluetooth? ( >=dev-qt/qtbluetooth-${QT_PV} )
@@ -82,7 +81,6 @@ RDEPEND="
 	svg? ( >=dev-qt/qtsvg-${QT_PV} )
 	testlib? ( >=dev-qt/qttest-${QT_PV} )
 	webchannel? ( >=dev-qt/qtwebchannel-${QT_PV} )
-	webengine? ( >=dev-qt/qtwebengine-${QT_PV}[widgets?] )
 	webkit? ( >=dev-qt/qtwebkit-5.9:5[printsupport] )
 	websockets? ( >=dev-qt/qtwebsockets-${QT_PV} )
 	widgets? ( >=dev-qt/qtwidgets-${QT_PV} )
@@ -118,13 +116,14 @@ src_configure() {
 		local myconf=(
 			"${PYTHON}"
 			"${S}"/configure.py
+			CFLAGS="${CFLAGS}$(python_is_python3 || printf -- " -fno-strict-aliasing")"
 			$(usex debug '--debug --qml-debug --trace' '')
 			--verbose
 			--confirm-license
 			--qmake="$(qt5_get_bindir)"/qmake
-			--bindir="${EPREFIX}/usr/bin"
-			--destdir="$(python_get_sitedir)"
-			--sip-incdir="$(python_get_includedir)"
+		#	--bindir="${EPREFIX}/usr/bin"
+		#	--destdir="$(python_get_sitedir)"
+		#	--sip-incdir="$(python_get_includedir)"
 			--qsci-api
 			--no-dist-info
 			$(pyqt_use_enable bluetooth QtBluetooth)
@@ -145,13 +144,13 @@ src_configure() {
 			$(pyqt_use_enable printsupport QtPrintSupport)
 			$(pyqt_use_enable declarative QtQml QtQuick $(usex widgets QtQuickWidgets ''))
 			$(usex declarative '' --no-qml-plugin)
+			$(pyqt_use_enable remoteobjects QtRemoteObjects)
 			$(pyqt_use_enable sensors QtSensors)
 			$(pyqt_use_enable serialport QtSerialPort)
 			$(pyqt_use_enable sql QtSql)
 			$(pyqt_use_enable svg QtSvg)
 			$(pyqt_use_enable testlib QtTest)
 			$(pyqt_use_enable webchannel QtWebChannel)
-			$(pyqt_use_enable webengine QtWebEngine QtWebEngineCore $(usex widgets QtWebEngineWidgets ''))
 			$(pyqt_use_enable webkit QtWebKit QtWebKitWidgets)
 			$(pyqt_use_enable websockets QtWebSockets)
 			$(pyqt_use_enable widgets QtWidgets)
