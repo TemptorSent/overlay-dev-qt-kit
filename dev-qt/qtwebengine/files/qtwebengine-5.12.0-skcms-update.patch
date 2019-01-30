@@ -1,7 +1,7 @@
-diff -u -r skcms-orig/skcms.cc skcms/skcms.cc
---- skcms-orig/skcms.cc	2019-01-29 04:54:59.970433300 -0000
-+++ skcms/skcms.cc	2019-01-29 18:59:07.058343657 -0000
-@@ -12,6 +13,12 @@
+diff -r -u orig/src/3rdparty/chromium/third_party/skia/third_party/skcms/skcms.cc new/src/3rdparty/chromium/third_party/skia/third_party/skcms/skcms.cc
+--- orig/src/3rdparty/chromium/third_party/skia/third_party/skcms/skcms.cc	2019-01-29 22:39:12.930320283 -0000
++++ new/src/3rdparty/chromium/third_party/skia/third_party/skcms/skcms.cc	2019-01-29 18:59:07.058343657 -0000
+@@ -13,6 +13,12 @@
  #include <stdlib.h>
  #include <string.h>
  
@@ -14,7 +14,7 @@ diff -u -r skcms-orig/skcms.cc skcms/skcms.cc
  // sizeof(x) will return size_t, which is 32-bit on some machines and 64-bit on others.
  // We have better testing on 64-bit machines, so force 32-bit machines to behave like 64-bit.
  //
-@@ -713,7 +720,10 @@
+@@ -714,7 +720,10 @@
      return true;
  }
  
@@ -26,7 +26,7 @@ diff -u -r skcms-orig/skcms.cc skcms/skcms.cc
      assert(N > 1);
      // We iteratively fit the first points to the TF's linear piece.
      // We want the cx + f line to pass through the first and last points we fit exactly.
-@@ -728,7 +738,14 @@
+@@ -729,7 +738,14 @@
      const float dx = 1.0f / (N - 1);
  
      int lin_points = 1;
@@ -42,7 +42,7 @@ diff -u -r skcms-orig/skcms.cc skcms/skcms.cc
  
      float slope_min = -INFINITY_;
      float slope_max = +INFINITY_;
-@@ -790,7 +807,7 @@
+@@ -791,7 +807,7 @@
          if (curve && curve->table_entries && curve->table_entries <= (uint32_t)INT_MAX) {
              int N = (int)curve->table_entries;
  
@@ -51,7 +51,7 @@ diff -u -r skcms-orig/skcms.cc skcms/skcms.cc
              if (N == fit_linear(curve, N, 1.0f/(2*N), &c,&d,&f)
                  && c == 1.0f
                  && f == 0.0f) {
-@@ -989,10 +1006,10 @@
+@@ -990,10 +1006,10 @@
          {
              0,
              {
@@ -66,7 +66,7 @@ diff -u -r skcms-orig/skcms.cc skcms/skcms.cc
              },
              {0,0,0,0},
              nullptr,
-@@ -1000,21 +1017,21 @@
+@@ -1001,21 +1017,21 @@
  
              0,
              {
@@ -97,7 +97,7 @@ diff -u -r skcms-orig/skcms.cc skcms/skcms.cc
              },
          },
      };
-@@ -1049,10 +1066,10 @@
+@@ -1050,10 +1066,10 @@
          {
              0,
              {
@@ -112,7 +112,7 @@ diff -u -r skcms-orig/skcms.cc skcms/skcms.cc
              },
              {0,0,0,0},
              nullptr,
-@@ -1060,21 +1077,21 @@
+@@ -1061,21 +1077,21 @@
  
              0,
              {
@@ -143,7 +143,7 @@ diff -u -r skcms-orig/skcms.cc skcms/skcms.cc
              },
          },
      };
-@@ -1088,7 +1105,7 @@
+@@ -1089,7 +1105,7 @@
  
  const skcms_TransferFunction* skcms_sRGB_Inverse_TransferFunction() {
      static const skcms_TransferFunction sRGB_inv =
@@ -152,7 +152,7 @@ diff -u -r skcms-orig/skcms.cc skcms/skcms.cc
      return &sRGB_inv;
  }
  
-@@ -1117,6 +1134,11 @@
+@@ -1118,6 +1134,11 @@
  };
  
  bool skcms_ApproximatelyEqualProfiles(const skcms_ICCProfile* A, const skcms_ICCProfile* B) {
@@ -164,7 +164,7 @@ diff -u -r skcms-orig/skcms.cc skcms/skcms.cc
      // For now this is the essentially the same strategy we use in test_only.c
      // for our skcms_Transform() smoke tests:
      //    1) transform A to XYZD50
-@@ -1124,7 +1146,7 @@
+@@ -1125,7 +1146,7 @@
      //    3) return true if they're similar enough
      // Our current criterion in 3) is maximum 1 bit error per XYZD50 byte.
  
@@ -173,7 +173,7 @@ diff -u -r skcms-orig/skcms.cc skcms/skcms.cc
      // 252 is evenly divisible by 3 and 4.  Only 192, 10, 241, and 43 are missing.
  
      if (A->data_color_space != B->data_color_space) {
-@@ -1132,6 +1154,7 @@
+@@ -1133,6 +1154,7 @@
      }
  
      // Interpret as RGB_888 if data color space is RGB or GRAY, RGBA_8888 if CMYK.
@@ -181,7 +181,7 @@ diff -u -r skcms-orig/skcms.cc skcms/skcms.cc
      skcms_PixelFormat fmt = skcms_PixelFormat_RGB_888;
      size_t npixels = 84;
      if (A->data_color_space == skcms_Signature_CMYK) {
-@@ -1139,6 +1162,8 @@
+@@ -1140,6 +1162,8 @@
          npixels = 63;
      }
  
@@ -190,7 +190,7 @@ diff -u -r skcms-orig/skcms.cc skcms/skcms.cc
      uint8_t dstA[252],
              dstB[252];
      if (!skcms_Transform(
-@@ -1154,6 +1179,7 @@
+@@ -1155,6 +1179,7 @@
          return false;
      }
  
@@ -198,7 +198,7 @@ diff -u -r skcms-orig/skcms.cc skcms/skcms.cc
      for (size_t i = 0; i < 252; i++) {
          if (abs((int)dstA[i] - (int)dstB[i]) > 1) {
              return false;
-@@ -1377,80 +1403,67 @@
+@@ -1378,80 +1403,67 @@
                               : powf_(tf->a * x + tf->b, tf->g) + tf->e);
  }
  
@@ -334,7 +334,7 @@ diff -u -r skcms-orig/skcms.cc skcms/skcms.cc
  }
  
  // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ //
-@@ -1670,7 +1683,10 @@
+@@ -1671,7 +1683,10 @@
      for (int t = 0; t < ARRAY_COUNT(kTolerances); t++) {
          skcms_TransferFunction tf,
                                 tf_inv;
@@ -346,7 +346,7 @@ diff -u -r skcms-orig/skcms.cc skcms/skcms.cc
  
          if (L == N) {
              // If the entire data set was linear, move the coefficients to the nonlinear portion
-@@ -1734,17 +1750,18 @@
+@@ -1735,17 +1750,18 @@
  // ~~~~ Impl. of skcms_Transform() ~~~~
  
  typedef enum {
@@ -369,7 +369,7 @@ diff -u -r skcms-orig/skcms.cc skcms/skcms.cc
      Op_load_hhh,
      Op_load_hhhh,
      Op_load_fff,
-@@ -1765,24 +1782,12 @@
+@@ -1766,24 +1782,12 @@
      Op_tf_b,
      Op_tf_a,
  
@@ -400,7 +400,7 @@ diff -u -r skcms-orig/skcms.cc skcms/skcms.cc
  
      Op_store_a8,
      Op_store_g8,
-@@ -1791,8 +1796,10 @@
+@@ -1792,8 +1796,10 @@
      Op_store_888,
      Op_store_8888,
      Op_store_1010102,
@@ -413,7 +413,7 @@ diff -u -r skcms-orig/skcms.cc skcms/skcms.cc
      Op_store_hhh,
      Op_store_hhhh,
      Op_store_fff,
-@@ -1809,173 +1816,93 @@
+@@ -1810,173 +1816,93 @@
  #endif
  
  #if defined(__clang__)
@@ -653,7 +653,7 @@ diff -u -r skcms-orig/skcms.cc skcms/skcms.cc
      #endif
  
      #define TEST_FOR_HSW
-@@ -2033,42 +1960,42 @@
+@@ -2034,42 +1960,42 @@
  } OpAndArg;
  
  static OpAndArg select_curve_op(const skcms_Curve* curve, int channel) {
@@ -721,7 +721,7 @@ diff -u -r skcms-orig/skcms.cc skcms/skcms.cc
      }
      assert(false);
      return 0;
-@@ -2100,7 +2027,22 @@
+@@ -2101,7 +2027,22 @@
                       skcms_PixelFormat       dstFmt,
                       skcms_AlphaFormat       dstAlpha,
                       const skcms_ICCProfile* dstProfile,
@@ -745,7 +745,7 @@ diff -u -r skcms-orig/skcms.cc skcms/skcms.cc
      const size_t dst_bpp = bytes_per_pixel(dstFmt),
                   src_bpp = bytes_per_pixel(srcFmt);
      // Let's just refuse if the request is absurdly big.
-@@ -2118,12 +2060,15 @@
+@@ -2119,12 +2060,15 @@
      }
  
      // We can't transform in place unless the PixelFormats are the same size.
@@ -763,7 +763,7 @@ diff -u -r skcms-orig/skcms.cc skcms/skcms.cc
      Op          program  [32];
      const void* arguments[32];
  
-@@ -2135,19 +2080,25 @@
+@@ -2136,19 +2080,25 @@
  
      switch (srcFmt >> 1) {
          default: return false;
@@ -802,7 +802,7 @@ diff -u -r skcms-orig/skcms.cc skcms/skcms.cc
      }
      if (srcFmt & 1) {
          *ops++ = Op_swap_rb;
-@@ -2175,11 +2126,7 @@
+@@ -2176,11 +2126,7 @@
          *ops++ = Op_unpremul;
      }
  
@@ -815,7 +815,7 @@ diff -u -r skcms-orig/skcms.cc skcms/skcms.cc
  
          if (!prep_for_destination(dstProfile,
                                    &from_xyz, &inv_dst_tf_r, &inv_dst_tf_b, &inv_dst_tf_g)) {
-@@ -2190,25 +2137,20 @@
+@@ -2191,25 +2137,20 @@
              if (srcProfile->A2B.input_channels) {
                  for (int i = 0; i < (int)srcProfile->A2B.input_channels; i++) {
                      OpAndArg oa = select_curve_op(&srcProfile->A2B.input_curves[i], i);
@@ -845,7 +845,7 @@ diff -u -r skcms-orig/skcms.cc skcms/skcms.cc
                          *ops++  = oa.op;
                          *args++ = oa.arg;
                      }
-@@ -2228,7 +2170,7 @@
+@@ -2229,7 +2170,7 @@
              if (srcProfile->A2B.output_channels == 3) {
                  for (int i = 0; i < 3; i++) {
                      OpAndArg oa = select_curve_op(&srcProfile->A2B.output_curves[i], i);
@@ -854,7 +854,7 @@ diff -u -r skcms-orig/skcms.cc skcms/skcms.cc
                          *ops++  = oa.op;
                          *args++ = oa.arg;
                      }
-@@ -2242,7 +2184,7 @@
+@@ -2243,7 +2184,7 @@
          } else if (srcProfile->has_trc && srcProfile->has_toXYZD50) {
              for (int i = 0; i < 3; i++) {
                  OpAndArg oa = select_curve_op(&srcProfile->trc[i], i);
@@ -863,7 +863,7 @@ diff -u -r skcms-orig/skcms.cc skcms/skcms.cc
                      *ops++  = oa.op;
                      *args++ = oa.arg;
                  }
-@@ -2251,13 +2193,6 @@
+@@ -2252,13 +2193,6 @@
              return false;
          }
  
@@ -877,7 +877,7 @@ diff -u -r skcms-orig/skcms.cc skcms/skcms.cc
          // A2B sources should already be in XYZD50 at this point.
          // Others still need to be transformed using their toXYZD50 matrix.
          // N.B. There are profiles that contain both A2B tags and toXYZD50 matrices.
-@@ -2280,10 +2215,6 @@
+@@ -2281,10 +2215,6 @@
              *args++ = &from_xyz;
          }
  
@@ -888,7 +888,7 @@ diff -u -r skcms-orig/skcms.cc skcms/skcms.cc
          // Encode back to dst RGB using its parametric transfer functions.
          if (!is_identity_tf(&inv_dst_tf_r)) { *ops++ = Op_tf_r; *args++ = &inv_dst_tf_r; }
          if (!is_identity_tf(&inv_dst_tf_g)) { *ops++ = Op_tf_g; *args++ = &inv_dst_tf_g; }
-@@ -2295,7 +2226,6 @@
+@@ -2296,7 +2226,6 @@
      //
      // E.g. r = 1.1, a = 0.5 would fit fine in fixed point after premul (ra=0.55,a=0.5),
      // but would be carrying r > 1, which is really unexpected for downstream consumers.
@@ -896,7 +896,7 @@ diff -u -r skcms-orig/skcms.cc skcms/skcms.cc
      if (dstFmt < skcms_PixelFormat_RGB_hhh) {
          *ops++ = Op_clamp;
      }
-@@ -2309,26 +2239,26 @@
+@@ -2310,26 +2239,26 @@
      }
      switch (dstFmt >> 1) {
          default: return false;
@@ -940,7 +940,7 @@ diff -u -r skcms-orig/skcms.cc skcms/skcms.cc
  #endif
      run(program, arguments, (const char*)src, (char*)dst, n, src_bpp,dst_bpp);
      return true;
-@@ -2387,7 +2317,9 @@
+@@ -2388,7 +2317,9 @@
      float min_max_error = INFINITY_;
      for (int i = 0; i < 3; i++) {
          skcms_TransferFunction inv;
@@ -951,9 +951,9 @@ diff -u -r skcms-orig/skcms.cc skcms/skcms.cc
  
          float err = 0;
          for (int j = 0; j < 3; ++j) {
-diff -u -r skcms-orig/skcms.h skcms/skcms.h
---- skcms-orig/skcms.h	2018-11-13 18:25:11.000000000 -0000
-+++ skcms/skcms.h	2019-01-29 18:59:07.058343657 -0000
+diff -r -u orig/src/3rdparty/chromium/third_party/skia/third_party/skcms/skcms.h new/src/3rdparty/chromium/third_party/skia/third_party/skcms/skcms.h
+--- orig/src/3rdparty/chromium/third_party/skia/third_party/skcms/skcms.h	2018-11-13 18:25:11.000000000 -0000
++++ new/src/3rdparty/chromium/third_party/skia/third_party/skcms/skcms.h	2019-01-29 18:59:07.058343657 -0000
 @@ -27,6 +27,10 @@
      float vals[3][3];
  } skcms_Matrix3x3;
@@ -1062,9 +1062,9 @@ diff -u -r skcms-orig/skcms.h skcms/skcms.h
  // If profile can be used as a destination in skcms_Transform, return true. Otherwise, attempt to
  // rewrite it with approximations where reasonable. If successful, return true. If no reasonable
  // approximation exists, leave the profile unchanged and return false.
-diff -u -r skcms-orig/skcms_internal.h skcms/skcms_internal.h
---- skcms-orig/skcms_internal.h	2018-11-13 18:25:11.000000000 -0000
-+++ skcms/skcms_internal.h	2019-01-29 18:59:07.058343657 -0000
+diff -r -u orig/src/3rdparty/chromium/third_party/skia/third_party/skcms/skcms_internal.h new/src/3rdparty/chromium/third_party/skia/third_party/skcms/skcms_internal.h
+--- orig/src/3rdparty/chromium/third_party/skia/third_party/skcms/skcms_internal.h	2018-11-13 18:25:11.000000000 -0000
++++ new/src/3rdparty/chromium/third_party/skia/third_party/skcms/skcms_internal.h	2019-01-29 18:59:07.058343657 -0000
 @@ -21,10 +21,6 @@
  // ~~~~ General Helper Macros ~~~~
      #define ARRAY_COUNT(arr) (int)(sizeof((arr)) / sizeof(*(arr)))
@@ -1100,9 +1100,9 @@ diff -u -r skcms-orig/skcms_internal.h skcms/skcms_internal.h
  #ifdef __cplusplus
  }
  #endif
-diff -u -r skcms-orig/src/Transform_inl.h skcms/src/Transform_inl.h
---- skcms-orig/src/Transform_inl.h	2018-11-13 18:25:11.000000000 -0000
-+++ skcms/src/Transform_inl.h	2019-01-29 18:59:07.058343657 -0000
+diff -r -u orig/src/3rdparty/chromium/third_party/skia/third_party/skcms/src/Transform_inl.h new/src/3rdparty/chromium/third_party/skia/third_party/skcms/src/Transform_inl.h
+--- orig/src/3rdparty/chromium/third_party/skia/third_party/skcms/src/Transform_inl.h	2018-11-13 18:25:11.000000000 -0000
++++ new/src/3rdparty/chromium/third_party/skia/third_party/skcms/src/Transform_inl.h	2019-01-29 18:59:07.058343657 -0000
 @@ -7,50 +7,71 @@
  
  // Intentionally NO #pragma once... included multiple times.
@@ -2714,9 +2714,9 @@ diff -u -r skcms-orig/src/Transform_inl.h skcms/src/Transform_inl.h
 -    #undef  STORE_4
 -#endif
 +#undef FALLTHROUGH
-diff -u -r skcms-orig/version.sha1 skcms/version.sha1
---- skcms-orig/version.sha1	2018-11-13 18:25:11.000000000 -0000
-+++ skcms/version.sha1	2019-01-29 22:00:39.614324377 -0000
+diff -r -u orig/src/3rdparty/chromium/third_party/skia/third_party/skcms/version.sha1 new/src/3rdparty/chromium/third_party/skia/third_party/skcms/version.sha1
+--- orig/src/3rdparty/chromium/third_party/skia/third_party/skcms/version.sha1	2018-11-13 18:25:11.000000000 -0000
++++ new/src/3rdparty/chromium/third_party/skia/third_party/skcms/version.sha1	2019-01-29 22:00:39.614324377 -0000
 @@ -1 +1 @@
 -b2fffd2ecf2e47ec2faf811865f9eb934be1c0e1
 +cd2260c9f5289b05d6b23797a291e54508026823

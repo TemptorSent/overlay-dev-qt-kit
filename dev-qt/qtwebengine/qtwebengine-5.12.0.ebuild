@@ -87,8 +87,6 @@ PATCHES+=(
 
 src_prepare() {
 	use pax_kernel && PATCHES+=( "${FILESDIR}/${PN}-5.11.2-paxmark-mksnapshot.patch" )
-	# Fix double-include
-	sed -e '/#include "skcms.h"/d' -i "src/3rdparty/chromium/third_party/skia/third_party/skcms/skcms.cc" || die
 
 	if ! use jumbo-build; then
 		sed -i -e 's|use_jumbo_build=true|use_jumbo_build=false|' \
