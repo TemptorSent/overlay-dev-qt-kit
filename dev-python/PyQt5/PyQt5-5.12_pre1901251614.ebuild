@@ -72,6 +72,7 @@ RDEPEND="
 	location? ( >=dev-qt/qtlocation-${QT_PV} )
 	multimedia? ( >=dev-qt/qtmultimedia-${QT_PV}[widgets?] )
 	network? ( >=dev-qt/qtnetwork-${QT_PV} )
+	networkauth? ( >=dev-qt/qtnetworkauth-${QT_PV} )
 	opengl? ( >=dev-qt/qtopengl-${QT_PV} )
 	positioning? ( >=dev-qt/qtpositioning-${QT_PV} )
 	printsupport? ( >=dev-qt/qtprintsupport-${QT_PV} )
