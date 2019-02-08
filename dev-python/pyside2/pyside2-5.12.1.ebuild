@@ -4,7 +4,7 @@ EAPI=6
 
 PYTHON_COMPAT=( python2_7 python3_{4,5,6,7} )
 
-inherit cmake-utils flag-o-matic python-r1 virtualx
+inherit cmake-utils llvm flag-o-matic python-r1 virtualx
 
 DESCRIPTION="Python bindings for the Qt framework"
 HOMEPAGE="https://wiki.qt.io/PySide2"
@@ -52,8 +52,11 @@ REQUIRED_USE="
 #   find_package(Qt5 ${QT_PV} REQUIRED COMPONENTS Core)
 QT_PV="5.9.0:5"
 
+CLANG_DEPS=">=sys-devel/clang-6"
+
 DEPEND="
 	${PYTHON_DEPS}
+	${CLANG_DEPS}
 	>=dev-python/shiboken2-${PV}:${SLOT}[${PYTHON_USEDEP}]
 	>=dev-qt/qtcore-${QT_PV}
 	>=dev-qt/qtxml-${QT_PV}
@@ -98,6 +101,14 @@ RDEPEND="${DEPEND}"
 S="${WORKDIR}/${TARBALL}/sources/${PN}"
 
 src_prepare() {
+	export LLVM_INSTALL_DIR="$(get_llvm_prefix)"
+	export PATH="$(get_llvm_prefix):${PATH}"
+	export CC="clang"
+	export CXX="clang++"
+	export AR="llvm-ar"
+	export AS="llvm-as"
+	export RANLIB="llvm-ranlib"
+	tc-export CC CXX AR AS
 	if use prefix; then
 		cp "${FILESDIR}"/rpath.cmake . || die
 		sed -i -e '1iinclude(rpath.cmake)' CMakeLists.txt || die
@@ -210,9 +221,21 @@ src_configure() {
 	)
 
 	configuration() {
+		llvm_pkg_setup
+		export LLVM_INSTALL_DIR="$(get_llvm_prefix)"
+		export CC="clang"
+		export CXX="clang++"
+		export AR="llvm-ar"
+		export RANLIB="llvm-ranlib"
 		local mycmakeargs=(
 			"${mycmakeargs[@]}"
 			-DPYTHON_EXECUTABLE="${PYTHON}"
+			-DCMAKE_ASM_COMPILER="llvm-as"
+			-DCMAKE_C_COMPILER="clang"
+			-DCMAKE_CXX_COMPILER="clang++"
+			-DCMAKE_AR="llvm-ar"
+			-DCMAKE_RANLIB="llvm-ranlib"
+			-DLLVM_INSTALL_DIR="$(get_llvm_prefix)"
 		)
 		cmake-utils_src_configure
 	}
