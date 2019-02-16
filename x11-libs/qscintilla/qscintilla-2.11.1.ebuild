@@ -17,7 +17,7 @@ else
 fi
 
 LICENSE="GPL-3"
-SLOT="0/14"
+SLOT="0/13"
 KEYWORDS="amd64 ~arm ppc ~ppc64 x86"
 IUSE="designer doc"
 
