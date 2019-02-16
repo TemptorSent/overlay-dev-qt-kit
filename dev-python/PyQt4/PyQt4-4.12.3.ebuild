@@ -9,8 +9,8 @@ inherit multibuild python-r1 qmake-utils
 DESCRIPTION="Python bindings for the Qt framework"
 HOMEPAGE="https://www.riverbankcomputing.com/software/pyqt/intro"
 
-MY_P=${PN}_gpl-${PV/_pre/.dev}
-if [[ ${PV} == *_pre* ]]; then
+MY_P="${PN}_gpl_x11-${PV/_pre/.dev}"
+if [[ "${PV}" == *_pre* ]]; then
 	SRC_URI="https://www.riverbankcomputing.com/static/Downloads/${PN}/${MY_P}.tar.gz"
 else
 	SRC_URI="mirror://sourceforge/pyqt/${MY_P}.tar.gz"
@@ -20,43 +20,47 @@ LICENSE="GPL-3"
 SLOT="0"
 KEYWORDS="amd64 ~arm ~arm64 ~ppc ~ppc64 x86"
 
-# TODO: QtNetworkAuth, QtNfc
-IUSE="bluetooth dbus debug declarative designer examples gles2 gui help location
-	multimedia network opengl positioning printsupport sensors serialport sql svg
-	testlib webchannel webengine webkit websockets widgets x11extras xmlpatterns"
+IUSE="assistant dbus declarative designer gui help multimedia network opengl script scripttools sql svg testlib webkit xml xmlpatterns phonon" 
+
+IUSE="debug
+bluetooth dbus designer gui help location
+	multimedia network networkauth nfc opengl positioning printsupport declarative remoteobjects sensors serialport sql svg
+	testlib webchannel webkit websockets widgets x11extras xmlpatterns"
+# Note: USE="gles2" disables Desktop OpenGL functionality and is mutually exclusive!
+IUSE="${IUSE} debug examples gles2"
 
 # The requirements below were extracted from configure.py
 # and from the output of 'grep -r "%Import " "${S}"/sip'
 REQUIRED_USE="
 	${PYTHON_REQUIRED_USE}
 	bluetooth? ( gui )
-	declarative? ( gui network )
-	designer? ( widgets )
+	designer? ( gui )
 	help? ( gui widgets )
 	location? ( positioning )
 	multimedia? ( gui network )
-	opengl? ( gui widgets )
+	networkauth? ( network )
+	opengl? ( gui )
 	positioning? ( gui )
-	printsupport? ( gui widgets )
+	printsupport? ( gui )
+	declarative? ( gui )
 	sensors? ( gui )
 	serialport? ( gui )
-	sql? ( widgets )
-	svg? ( gui widgets )
-	testlib? ( widgets )
+	sql? ( gui widgets )
+	svg? ( gui )
+	testlib? ( gui widgets )
 	webchannel? ( network )
-	webengine? ( network widgets? ( printsupport webchannel ) )
-	webkit? ( gui network printsupport widgets )
-	websockets? ( network )
+	webkit? ( gui network widgets? ( printsupport ) )
 	widgets? ( gui )
+	x11extras? ( gui )
 	xmlpatterns? ( network )
 "
 
 # Minimal supported version of Qt.
-QT_PV="5.9.4:5"
+QT_PV="4.8.5:4"
 
 RDEPEND="
 	${PYTHON_DEPS}
-	>=dev-python/sip-4.19.6:=[${PYTHON_USEDEP}]
+	>=dev-python/sip-4.19.12:=[${PYTHON_USEDEP}]
 	>=dev-qt/qtcore-${QT_PV}
 	>=dev-qt/qtxml-${QT_PV}
 	bluetooth? ( >=dev-qt/qtbluetooth-${QT_PV} )
@@ -80,7 +84,6 @@ RDEPEND="
 	svg? ( >=dev-qt/qtsvg-${QT_PV} )
 	testlib? ( >=dev-qt/qttest-${QT_PV} )
 	webchannel? ( >=dev-qt/qtwebchannel-${QT_PV} )
-	webengine? ( >=dev-qt/qtwebengine-${QT_PV}[widgets?] )
 	webkit? ( >=dev-qt/qtwebkit-5.9:5[printsupport] )
 	websockets? ( >=dev-qt/qtwebsockets-${QT_PV} )
 	widgets? ( >=dev-qt/qtwidgets-${QT_PV} )
@@ -88,23 +91,23 @@ RDEPEND="
 	xmlpatterns? ( >=dev-qt/qtxmlpatterns-${QT_PV} )
 "
 DEPEND="${RDEPEND}
-	dev-python/${PN}_sip
 	dbus? ( virtual/pkgconfig )
 "
+#dev-python/${PN}_sip
 
-S=${WORKDIR}/${MY_P}
+S="${WORKDIR}/${MY_P}"
 
 DOCS=( "${S}"/{ChangeLog,NEWS} )
 
 pyqt_use_enable() {
-	use "$1" || return
-
-	if [[ $# -eq 1 ]]; then
-		echo --enable=Qt$(tr 'a-z' 'A-Z' <<< ${1:0:1})${1:1}
-	else
+	local mode="disable"
+	# PyQt4 configure-ng.py only knows --enable, so simply skip disabled here:
+	use "$1" && mode="enable" || return
+	shift
+	while [ $# -gt 0 ] ; do
+		printf -- ' --%s=%s' "${mode}" "${1}"
 		shift
-		echo ${@/#/--enable=}
-	fi
+	done
 }
 
 src_prepare() {
@@ -116,47 +119,48 @@ src_configure() {
 	configuration() {
 		local myconf=(
 			"${PYTHON}"
-			"${S}"/configure.py
+			"${S}"/configure-ng.py
+			CFLAGS="${CFLAGS}$(python_is_python3 || printf -- " -fno-strict-aliasing")"
 			$(usex debug '--debug --qml-debug --trace' '')
 			--verbose
 			--confirm-license
 			--qmake="$(qt5_get_bindir)"/qmake
-			--bindir="${EPREFIX}/usr/bin"
-			--destdir="$(python_get_sitedir)"
-			--sip-incdir="$(python_get_includedir)"
-#			--sipdir="$(python_get_sitedir)/${PN}/sip"
+		#	--bindir="${EPREFIX}/usr/bin"
+		#	--destdir="$(python_get_sitedir)"
+		#	--sip-incdir="$(python_get_includedir)"
 			--qsci-api
 			--no-dist-info
-#			--enable=QtCore
-#			--enable=QtXml
-#			$(pyqt_use_enable bluetooth)
-#			$(pyqt_use_enable dbus QtDBus)
+			$(pyqt_use_enable bluetooth QtBluetooth)
+			--enable=QtCore
+			$(pyqt_use_enable dbus QtDBus)
 			$(usex dbus '' --no-python-dbus)
-#			$(pyqt_use_enable declarative QtQml QtQuick $(usex widgets QtQuickWidgets ''))
-			$(usex declarative '' --no-qml-plugin)
-#			$(pyqt_use_enable designer)
+			$(pyqt_use_enable designer QtDesigner)
 			$(usex designer '' --no-designer-plugin)
-#			$(pyqt_use_enable gui)
-#			$(pyqt_use_enable gui $(use gles2 && echo _QOpenGLFunctions_ES2 || echo _QOpenGLFunctions_{2_0,2_1,4_1_Core}))
-#			$(pyqt_use_enable help)
-#			$(pyqt_use_enable location)
-#			$(pyqt_use_enable multimedia QtMultimedia $(usex widgets QtMultimediaWidgets ''))
-#			$(pyqt_use_enable network)
-#			$(pyqt_use_enable opengl QtOpenGL)
-#			$(pyqt_use_enable positioning)
-#			$(pyqt_use_enable printsupport QtPrintSupport)
-#			$(pyqt_use_enable sensors)
-#			$(pyqt_use_enable serialport QtSerialPort)
-#			$(pyqt_use_enable sql)
-#			$(pyqt_use_enable svg)
-#			$(pyqt_use_enable testlib QtTest)
-#			$(pyqt_use_enable webchannel QtWebChannel)
-#			$(pyqt_use_enable webengine QtWebEngine QtWebEngineCore $(usex widgets QtWebEngineWidgets ''))
-#			$(pyqt_use_enable webkit QtWebKit QtWebKitWidgets)
-#			$(pyqt_use_enable websockets QtWebSockets)
-#			$(pyqt_use_enable widgets)
-#			$(pyqt_use_enable x11extras QtX11Extras)
-#			$(pyqt_use_enable xmlpatterns QtXmlPatterns)
+			$(pyqt_use_enable gui QtGui)
+			$(pyqt_use_enable gui $(use gles2 && echo _QOpenGLFunctions_ES2 || echo _QOpenGLFunctions_{2_{0,1},4_1_Core}))
+			$(pyqt_use_enable help QtHelp)
+			$(pyqt_use_enable location QtLocation)
+			$(pyqt_use_enable multimedia QtMultimedia $(usex widgets QtMultimediaWidgets ''))
+			$(pyqt_use_enable network QtNetwork $(usex networkauth QtNetworkAuth ''))
+			$(pyqt_use_enable nfc QtNfc)
+			$(pyqt_use_enable opengl QtOpenGL)
+			$(pyqt_use_enable positioning QtPositioning)
+			$(pyqt_use_enable printsupport QtPrintSupport)
+			$(pyqt_use_enable declarative QtQml QtQuick $(usex widgets QtQuickWidgets ''))
+			$(usex declarative '' --no-qml-plugin)
+			$(pyqt_use_enable remoteobjects QtRemoteObjects)
+			$(pyqt_use_enable sensors QtSensors)
+			$(pyqt_use_enable serialport QtSerialPort)
+			$(pyqt_use_enable sql QtSql)
+			$(pyqt_use_enable svg QtSvg)
+			$(pyqt_use_enable testlib QtTest)
+			$(pyqt_use_enable webchannel QtWebChannel)
+			$(pyqt_use_enable webkit QtWebKit QtWebKitWidgets)
+			$(pyqt_use_enable websockets QtWebSockets)
+			$(pyqt_use_enable widgets QtWidgets)
+			$(pyqt_use_enable x11extras QtX11Extras)
+			--enable=QtXml
+			$(pyqt_use_enable xmlpatterns QtXmlPatterns)
 		)
 		echo "${myconf[@]}"
 		"${myconf[@]}" || die
