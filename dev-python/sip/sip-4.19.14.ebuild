@@ -23,7 +23,8 @@ elif [[ ${PV} == *_pre* ]]; then
 	SRC_URI="https://www.riverbankcomputing.com/static/Downloads/${PN}/${MY_P}.tar.gz"
 	S=${WORKDIR}/${MY_P}
 else
-	SRC_URI="mirror://sourceforge/pyqt/${P}.tar.gz"
+	SRC_URI="https://www.riverbankcomputing.com/static/Downloads/${PN}/${MY_P}.tar.gz"
+	#SRC_URI="mirror://sourceforge/pyqt/${P}.tar.gz"
 fi
 
 # Sub-slot based on SIP_API_MAJOR_NR from siplib/sip.h
