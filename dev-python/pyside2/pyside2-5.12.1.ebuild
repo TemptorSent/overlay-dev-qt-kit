@@ -3,10 +3,12 @@
 EAPI=6
 
 PYTHON_COMPAT=( python2_7 python3_{4,5,6,7} )
+#CMAKE_IN_SOURCE_BUILD=1
 
-inherit cmake-utils llvm flag-o-matic python-r1 virtualx
+inherit llvm flag-o-matic python-r1 virtualx cmake-utils
 
-DESCRIPTION="Python bindings for the Qt framework"
+
+DESCRIPTION="Qt for Python - Python bindings for the Qt framework"
 HOMEPAGE="https://wiki.qt.io/PySide2"
 TARBALL="pyside-setup-everywhere-src-${PV}"
 # See "sources/pyside2/PySide2/licensecomment.txt" for licensing details.
@@ -16,9 +18,9 @@ SLOT="2/2.0.0"
 KEYWORDS="*"
 
 
-IUSE="3d charts concurrent datavis3d declarative designer gui help location multimedia
-	network opengl positioning printsupport script scripttools scxml sensors speech sql svg
-	testlib webchannel webengine websockets widgets x11extras xmlpatterns"
+IUSE="3d charts +concurrent datavis3d declarative designer +gui help location multimedia
+	+network opengl positioning +printsupport script scripttools scxml sensors speech +sql svg
+	+testlib webchannel webengine webkit websockets +widgets +x11extras xmlpatterns"
 # Excluded until fixed: webkit
 
 # Note: 'testlib' for qttest used above due to name conflict with 'test' for running tests.
@@ -27,6 +29,14 @@ IUSE="${IUSE} test"
 # The requirements below were extracted from the output of
 # 'grep "set(.*_deps" "${S}"/PySide2/Qt*/CMakeLists.txt'
 REQUIRED_USE="
+	gui
+	widgets
+	printsupport
+	sql
+	network
+	testlib
+	concurrent
+	x11extras
 	${PYTHON_REQUIRED_USE}
 	3d? ( concurrent )
 	charts? ( widgets )
@@ -38,6 +48,7 @@ REQUIRED_USE="
 	opengl? ( x11extras widgets )
 	printsupport? ( widgets )
 	scripttools? ( gui script widgets )
+	speech? ( multimedia )
 	sql? ( widgets )
 	svg? ( widgets )
 	testlib? ( widgets )
@@ -50,14 +61,14 @@ REQUIRED_USE="
 
 # Minimum version of Qt required, derived from the CMakeLists.txt line:
 #   find_package(Qt5 ${QT_PV} REQUIRED COMPONENTS Core)
-QT_PV="5.9.0:5"
+QT_PV="5.12.1:5"
 
 CLANG_DEPS=">=sys-devel/clang-6"
 
 DEPEND="
 	${PYTHON_DEPS}
 	${CLANG_DEPS}
-	>=dev-python/shiboken2-${PV}:${SLOT}[${PYTHON_USEDEP}]
+	=dev-python/shiboken2-${PV}:${SLOT}[${PYTHON_USEDEP}]
 	>=dev-qt/qtcore-${QT_PV}
 	>=dev-qt/qtxml-${QT_PV}
 	3d? ( >=dev-qt/qt3d-${QT_PV} )
@@ -98,23 +109,71 @@ RDEPEND="${DEPEND}"
 
 #PATCHES=( "${FILESDIR}/pyside2-5.11.1-qtgui-make-gl-time-classes-optional.patch" )
 
+#S="${WORKDIR}/${TARBALL}"
 S="${WORKDIR}/${TARBALL}/sources/${PN}"
 
+PYSIDE2_QT_PKGS_USE_ESSENTIAL="
+QtCore
+QtGui gui
+QtWidgets widgets
+QtPrintSupport printsupport
+QtSql sql
+QtNetwork network
+QtTest testlib
+QtConcurrent concurrent
+QtX11Extras x11extras
+"
+PYSIDE2_QT_PKGS_USE_OPTIONAL="
+QtXml
+QtXmlPatterns xmlpatterns
+QtHelp help
+QtMultimedia multimedia
+QtMultimediaWidgets multimedia widgets
+QtOpenGL opengl
+QtPositioning positioning
+QtLocation location
+QtQml declarative
+QtQuick declarative
+QtQuickWidgets declarative widgets
+QtScxml scxml
+QtScript script
+QtScriptTools scripttools
+QtSensors sensors
+QtTextToSpeech speech
+QtCharts charts
+QtSvg svg
+QtDataVisualization datavis3d
+QtUiTools designer
+QtWebChannel webchannel
+QtWebEngineCore webengine
+QtWebEngine webengine
+QtWebEngineWidgets webengine widgets
+QtWebKit webkit
+QtWebKitWidgets webkit widgets
+QtWebSockets websockets
+Qt3DCore 3d
+Qt3DRender 3d
+Qt3DInput 3d
+Qt3DLogic 3d
+Qt3DAnimation 3d
+Qt3DExtras 3d
+"
+
+PYSIDE2_QT_PKGS_USE="
+${PYSIDE2_QT_PKGS_USE_ESSENTIAL}
+${PYSIDE2_QT_PKGS_USE_OPTIONAL}
+"
+
 src_prepare() {
+	llvm_pkg_setup
 	export LLVM_INSTALL_DIR="$(get_llvm_prefix)"
 	export PATH="$(get_llvm_prefix):${PATH}"
-	export CC="clang"
-	export CXX="clang++"
-	export AR="llvm-ar"
-	export AS="llvm-as"
-	export RANLIB="llvm-ranlib"
-	tc-export CC CXX AR AS
+
 	if use prefix; then
 		cp "${FILESDIR}"/rpath.cmake . || die
 		sed -i -e '1iinclude(rpath.cmake)' CMakeLists.txt || die
 	fi
 
-	# Excluded until fixed:
 	#if use webkit ; then
 	#	sed -e '/list(APPEND ALL_OPTIONAL_MODULES/ s/WebSockets/WebKit WebKitWidgets &/' \
 	#		-i CMakeLists.txt || die
@@ -123,127 +182,47 @@ src_prepare() {
 	#	-i PySide2/QtWebKitWidgets/typesystem_webkitwidgets.xml || die
 	#fi
 
-
 	cmake-utils_src_prepare
 }
 
-PYSIDE2_QT_PKGS="
-Qt3DAnimation
-Qt3DCore
-Qt3DExtras
-Qt3DInput
-Qt3DLogic
-Qt3DRender
-QtCharts
-QtConcurrent
-QtCore
-QtDataVisualization
-QtGui
-QtHelp
-QtLocation
-QtMultimedia
-QtMultimediaWidgets
-QtNetwork
-QtOpenGL
-QtPositioning
-QtPrintSupport
-QtQml
-QtQuick
-QtQuickWidgets
-QtScript
-QtScriptTools
-QtScxml
-QtSensors
-QtSql
-QtSvg
-QtTest
-QtTextToSpeech
-QtUiTools
-QtWebChannel
-QtWebEngine
-QtWebEngineCore
-QtWebEngineWidgets
-QtWebKit
-QtWebKitWidgets
-QtWebSockets
-QtWidgets
-QtX11Extras
-QtXml
-QtXmlPatterns
-"
 
 src_configure() {
-	
-	# See COLLECT_MODULE_IF_FOUND macros in CMakeLists.txt
-	local mycmakeargs=(
-		-DBUILD_TESTS=$(usex test)
-		-DCMAKE_DISABLE_FIND_PACKAGE_Qt5Designer=$(usex !designer)
-		-DCMAKE_DISABLE_FIND_PACKAGE_Qt53DAnimation=$(usex !3d)
-		-DCMAKE_DISABLE_FIND_PACKAGE_Qt53DCore=$(usex !3d)
-		-DCMAKE_DISABLE_FIND_PACKAGE_Qt53DExtras=$(usex !3d)
-		-DCMAKE_DISABLE_FIND_PACKAGE_Qt53DInput=$(usex !3d)
-		-DCMAKE_DISABLE_FIND_PACKAGE_Qt53DLogic=$(usex !3d)
-		-DCMAKE_DISABLE_FIND_PACKAGE_Qt53DRender=$(usex !3d)
-		-DCMAKE_DISABLE_FIND_PACKAGE_Qt5Charts=$(usex !charts)
-		-DCMAKE_DISABLE_FIND_PACKAGE_Qt5Concurrent=$(usex !concurrent)
-		-DCMAKE_DISABLE_FIND_PACKAGE_Qt5DataVisualization=$(usex !datavis3d)
-		-DCMAKE_DISABLE_FIND_PACKAGE_Qt5Gui=$(usex !gui)
-		-DCMAKE_DISABLE_FIND_PACKAGE_Qt5Help=$(usex !help)
-		-DCMAKE_DISABLE_FIND_PACKAGE_Qt5Location=$(usex !location)
-		-DCMAKE_DISABLE_FIND_PACKAGE_Qt5Multimedia=$(usex !multimedia)
-		-DCMAKE_DISABLE_FIND_PACKAGE_Qt5MultimediaWidgets=$(usex !multimedia yes $(usex !widgets))
-		-DCMAKE_DISABLE_FIND_PACKAGE_Qt5Network=$(usex !network)
-		-DCMAKE_DISABLE_FIND_PACKAGE_Qt5OpenGL=$(usex !opengl)
-		-DCMAKE_DISABLE_FIND_PACKAGE_Qt5Positioning=$(usex !positioning)
-		-DCMAKE_DISABLE_FIND_PACKAGE_Qt5PrintSupport=$(usex !printsupport)
-		-DCMAKE_DISABLE_FIND_PACKAGE_Qt5Qml=$(usex !declarative)
-		-DCMAKE_DISABLE_FIND_PACKAGE_Qt5Quick=$(usex !declarative)
-		-DCMAKE_DISABLE_FIND_PACKAGE_Qt5QuickWidgets=$(usex !declarative yes $(usex !widgets))
-		-DCMAKE_DISABLE_FIND_PACKAGE_Qt5Script=$(usex !script)
-		-DCMAKE_DISABLE_FIND_PACKAGE_Qt5ScriptTools=$(usex !scripttools)
-		-DCMAKE_DISABLE_FIND_PACKAGE_Qt5Scxml=$(usex !scxml)
-		-DCMAKE_DISABLE_FIND_PACKAGE_Qt5Sensors=$(usex !sensors)
-		-DCMAKE_DISABLE_FIND_PACKAGE_Qt5Sql=$(usex !sql)
-		-DCMAKE_DISABLE_FIND_PACKAGE_Qt5Svg=$(usex !svg)
-		-DCMAKE_DISABLE_FIND_PACKAGE_Qt5Test=$(usex !testlib)
-		-DCMAKE_DISABLE_FIND_PACKAGE_Qt5TextToSpeech=$(usex !speech)
-		-DCMAKE_DISABLE_FIND_PACKAGE_Qt5UiTools=$(usex !designer)
-		-DCMAKE_DISABLE_FIND_PACKAGE_Qt5WebChannel=$(usex !webchannel)
-		-DCMAKE_DISABLE_FIND_PACKAGE_Qt5WebEngine=$(usex !webengine)
-		-DCMAKE_DISABLE_FIND_PACKAGE_Qt5WebEngineCore=$(usex !webengine)
-		-DCMAKE_DISABLE_FIND_PACKAGE_Qt5WebEngineWidgets=$(usex !webengine)
-		# Excluded until fixed: -DCMAKE_DISABLE_FIND_PACKAGE_Qt5WebKit=$(usex !webkit)
-		# Excluded until fixed: -DCMAKE_DISABLE_FIND_PACKAGE_Qt5WebKitWidgets=$(usex !webkit)
-		-DCMAKE_DISABLE_FIND_PACKAGE_Qt5WebSockets=$(usex !websockets)
-		-DCMAKE_DISABLE_FIND_PACKAGE_Qt5Widgets=$(usex !widgets)
-		-DCMAKE_DISABLE_FIND_PACKAGE_Qt5X11Extras=$(usex !x11extras)
-		-DCMAKE_DISABLE_FIND_PACKAGE_Qt5XmlPatterns=$(usex !xmlpatterns)
-	)
-
 	configuration() {
-		llvm_pkg_setup
-		export LLVM_INSTALL_DIR="$(get_llvm_prefix)"
-		export CC="clang"
-		export CXX="clang++"
-		export AR="llvm-ar"
-		export RANLIB="llvm-ranlib"
 		local mycmakeargs=(
-			"${mycmakeargs[@]}"
+			# Broken cfgs from shiboken2, fix before slotting: -DENABLE_VERSION_SUFFIX=TRUE
+			-DBUILD_TESTS=$(usex test)
+			-DUSE_XVFB=$(usex test)
 			-DPYTHON_EXECUTABLE="${PYTHON}"
-			-DCMAKE_ASM_COMPILER="llvm-as"
-			-DCMAKE_C_COMPILER="clang"
-			-DCMAKE_CXX_COMPILER="clang++"
-			-DCMAKE_AR="llvm-ar"
-			-DCMAKE_RANLIB="llvm-ranlib"
-			-DLLVM_INSTALL_DIR="$(get_llvm_prefix)"
+			-DPYTHON_SITE_PACKAGES="$(python_get_sitedir)"
+			-DMODULES="$(pyside2_build_modules_list)"
 		)
 		cmake-utils_src_configure
 	}
 	python_foreach_impl configuration
 }
 
+pyside2_build_modules_list() {
+	local mod deps dep
+	local str=""
+	local sep=";"
+	while read -r mod deps ; do
+		local met=1
+		[ -n "${mod}" ] || continue
+		if [ -n "${deps}" ] ; then
+			for dep in ${deps} ; do use ${dep} || met=0 ; done
+		fi
+		[ $met -eq 1 ] && str="${str:+"${str}${sep}"}${mod#Qt}"
+	done <<-EOF
+		${PYSIDE2_QT_PKGS_USE}
+	EOF
+	printf -- '%s' "${str}"
+}
+
 src_compile() {
-	python_foreach_impl cmake-utils_src_compile
+	do_compile() {
+		cmake-utils_src_compile
+	}
+	python_foreach_impl do_compile
 }
 
 src_test() {
@@ -255,14 +234,14 @@ src_test() {
 		return 0
 	fi
 	_do_test() {
-		 virtx cmake-utils_src_test
+		virtx cmake-utils_src_test
 	}
 	python_foreach_impl _do_test
 }
 
 src_install() {
 	installation() {
-		cmake-utils_src_install
+		CMAKE_USE_DIR="${BUILD_DIR}" cmake-utils_src_install
 		mv "${ED}"usr/$(get_libdir)/pkgconfig/${PN}{,-${EPYTHON}}.pc || die
 	}
 	python_foreach_impl installation

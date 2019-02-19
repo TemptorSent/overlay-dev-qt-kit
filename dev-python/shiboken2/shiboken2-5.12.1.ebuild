@@ -2,13 +2,13 @@
 
 EAPI=6
 
-PYTHON_COMPAT=( python2_7 python3_{4,5,6} )
+PYTHON_COMPAT=( python2_7 python3_{4,5,6,7} )
 
 inherit cmake-utils llvm python-r1
-TARBALL_VER=pyside-setup-everywhere-src-5.11.1
+TARBALL_VER=pyside-setup-everywhere-src-${PV}
 DESCRIPTION="Tool for creating Python bindings for C++ libraries"
 HOMEPAGE="https://wiki.qt.io/PySide2"
-SRC_URI="http://download.qt.io/official_releases/QtForPython/pyside2/PySide2-5.11.1-src/${TARBALL_VER}.tar.xz"
+SRC_URI="http://download.qt.io/official_releases/QtForPython/pyside2/PySide2-${PV}-src/${TARBALL_VER}.tar.xz"
 
 # The "sources/shiboken2/libshiboken" directory is triple-licensed under the GPL
 # v2, v3+, and LGPL v3. All remaining files are licensed under the GPL v3 with
@@ -62,6 +62,7 @@ src_configure() {
 	fi
 	configuration() {
 		local mycmakeargs=(
+			# Disabled because currently generated config files have wrong include dir, fix before slotting: -DENABLE_VERSION_SUFFIX=TRUE
 			-DBUILD_TESTS=$(usex test)
 			-DPYTHON_EXECUTABLE="${PYTHON}"
 			-DPYTHON_SITE_PACKAGES="$(python_get_sitedir)"

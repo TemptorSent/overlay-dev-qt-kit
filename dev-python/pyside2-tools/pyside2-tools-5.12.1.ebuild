@@ -3,7 +3,7 @@
 EAPI=6
 
 CMAKE_IN_SOURCE_BUILD="1"
-PYTHON_COMPAT=( python2_7 python3_{4,5,6} )
+PYTHON_COMPAT=( python2_7 python3_{4,5,6,7} )
 
 inherit cmake-utils python-r1 virtualx
 TARBALL="pyside-setup-everywhere-src-${PV}"
@@ -24,9 +24,11 @@ REQUIRED_USE="${PYTHON_REQUIRED_USE}"
 # "PySide2.QtWidgets" C extensions and hence requires "gui" and "widgets".
 RDEPEND="
 	${PYTHON_DEPS}
-	>=dev-python/pyside2-${PV}:${SLOT}[gui,widgets,${PYTHON_USEDEP}]
-	>=dev-python/shiboken2-${PV}:${SLOT}[${PYTHON_USEDEP}]
+	=dev-python/pyside2-${PV}:${SLOT}[gui,widgets,${PYTHON_USEDEP}]
+	=dev-python/shiboken2-${PV}:${SLOT}[${PYTHON_USEDEP}]
 	dev-qt/qtcore:5
+	dev-qt/qtgui:5
+	dev-qt/qtwidgets:5
 "
 DEPEND="${RDEPEND}
 	test? ( virtual/pkgconfig )
@@ -65,7 +67,10 @@ src_prepare() {
 src_configure() {
 	configuration() {
 		local mycmakeargs=(
+			# Broken cfgs from shiboken2, fix before slotting: -DENABLE_VERSION_SUFFIX=TRUE
 			-DBUILD_TESTS=$(usex test)
+			-DPYTHON_EXECUTABLE="${PYTHON}"
+			-DPYTHON_SITE_PACKAGES="$(python_get_sitedir)"
 		)
 
 		# Find the previously installed "Shiboken2Config.*.cmake" and
