@@ -23,7 +23,7 @@ if [[ ${PV} == *9999 ]]; then
 elif [[ ${PV} == *_pre* ]]; then
 	SRC_URI="https://www.riverbankcomputing.com/static/Downloads/${PN}/${MY_P}.tar.gz"
 else
-	SRC_URI="https://www.riverbankcomputing.com/static/Downloads/${PN}/${MY_P}.tar.gz"
+	SRC_URI="https://www.riverbankcomputing.com/static/Downloads/${PN}/${PV}/${MY_P}.tar.gz"
 	#SRC_URI="mirror://sourceforge/pyqt/${P}.tar.gz"
 fi
 

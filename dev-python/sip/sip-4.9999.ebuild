@@ -12,17 +12,19 @@ HOMEPAGE="https://www.riverbankcomputing.com/software/sip/intro"
 
 LICENSE="|| ( GPL-2 GPL-3 SIP )"
 KEYWORDS="~alpha ~amd64 ~arm ~arm64 ~hppa ~ia64 ~ppc ~ppc64 ~sparc ~x86 ~x86-fbsd ~amd64-linux ~x86-linux ~ppc-macos ~x64-macos ~x86-macos"
+MY_P="${P/_pre/.dev}"
+S="${WORKDIR}/${MY_P}"
 
 if [[ ${PV} == *9999 ]]; then
 	KEYWORDS=""
+	SRC_URI=""
 	inherit mercurial
 	EHG_REPO_URI="https://www.riverbankcomputing.com/hg/sip"
 elif [[ ${PV} == *_pre* ]]; then
-	MY_P=${P/_pre/.dev}
 	SRC_URI="https://www.riverbankcomputing.com/static/Downloads/${PN}/${MY_P}.tar.gz"
-	S=${WORKDIR}/${MY_P}
 else
-	SRC_URI="mirror://sourceforge/pyqt/${P}.tar.gz"
+	SRC_URI="https://www.riverbankcomputing.com/static/Downloads/${PN}/${PV}/${MY_P}.tar.gz"
+	#SRC_URI="mirror://sourceforge/pyqt/${P}.tar.gz"
 fi
 
 # Sub-slot based on SIP_API_MAJOR_NR from siplib/sip.h
@@ -72,32 +74,32 @@ src_prepare() {
 
 src_configure() {
 	configuration() {
-		case "${EPYTHON}" in
-			python2*) ADD_FLAGS=" -fno-strict-aliasing" ;;
-		esac
+		if python_is_python3 ; then
+			ADD_FLAGS=""
+		else
+			ADD_FLAGS=" -fno-strict-aliasing"
+		fi
 
 		local myconf=(
 			"${PYTHON}"
 			"${S}"/configure.py
-			--bindir="${EPREFIX}/usr/bin"
-			--destdir="$(python_get_sitedir)"
-			--incdir="$(python_get_includedir)"
-			$(usex debug --debug '')
 			AR="$(tc-getAR) cqs"
 			CC="$(tc-getCC)"
 			CFLAGS="${CFLAGS}${ADD_FLAGS}"
 			CFLAGS_RELEASE=
 			CXX="$(tc-getCXX)"
 			CXXFLAGS="${CXXFLAGS}${ADD_FLAGS}"
-			CXXFLAGS_RELEASE=
+		#	CXXFLAGS_RELEASE=
 			LINK="$(tc-getCXX)"
 			LINK_SHLIB="$(tc-getCXX)"
 			LFLAGS="${LDFLAGS}"
 			LFLAGS_RELEASE=
 			RANLIB=
 			STRIP=
+			$(usex debug --debug '')
 		)
 		echo "${myconf[@]}"
+
 		"${myconf[@]}" || die
 	}
 	python_foreach_impl run_in_build_dir configuration

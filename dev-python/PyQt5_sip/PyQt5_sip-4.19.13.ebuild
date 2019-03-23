@@ -25,7 +25,8 @@ elif [[ ${PV} == *_pre* ]]; then
 	SIP_P="${SIP_P/_pre/.dev}"
 	SRC_URI="https://www.riverbankcomputing.com/static/Downloads/sip/${SIP_P}.tar.gz"
 else
-	SRC_URI="mirror://sourceforge/pyqt/${SIP_P}.tar.gz"
+	SRC_URI="https://www.riverbankcomputing.com/static/Downloads/sip/${PV}/${SIP_P}.tar.gz"
+	#SRC_URI="mirror://sourceforge/pyqt/${SIP_P}.tar.gz"
 fi
 
 S="${WORKDIR}/${SIP_P}"

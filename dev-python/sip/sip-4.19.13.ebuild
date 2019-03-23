@@ -12,6 +12,8 @@ HOMEPAGE="https://www.riverbankcomputing.com/software/sip/intro"
 
 LICENSE="|| ( GPL-2 GPL-3 SIP )"
 KEYWORDS="~alpha ~amd64 ~arm ~arm64 ~hppa ~ia64 ~ppc ~ppc64 ~sparc ~x86 ~x86-fbsd ~amd64-linux ~x86-linux ~ppc-macos ~x64-macos ~x86-macos"
+MY_P="${P/_pre/.dev}"
+S="${WORKDIR}/${MY_P}"
 
 if [[ ${PV} == *9999 ]]; then
 	KEYWORDS=""
@@ -19,11 +21,10 @@ if [[ ${PV} == *9999 ]]; then
 	inherit mercurial
 	EHG_REPO_URI="https://www.riverbankcomputing.com/hg/sip"
 elif [[ ${PV} == *_pre* ]]; then
-	MY_P=${P/_pre/.dev}
 	SRC_URI="https://www.riverbankcomputing.com/static/Downloads/${PN}/${MY_P}.tar.gz"
-	S=${WORKDIR}/${MY_P}
 else
-	SRC_URI="mirror://sourceforge/pyqt/${P}.tar.gz"
+	SRC_URI="https://www.riverbankcomputing.com/static/Downloads/${PN}/${PV}/${MY_P}.tar.gz"
+	#SRC_URI="mirror://sourceforge/pyqt/${P}.tar.gz"
 fi
 
 # Sub-slot based on SIP_API_MAJOR_NR from siplib/sip.h
