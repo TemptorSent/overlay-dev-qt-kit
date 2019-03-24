@@ -2,7 +2,7 @@
 
 EAPI=6
 
-PYTHON_COMPAT=( python2_7 python3_{4,5,6,7} )
+PYTHON_COMPAT=( python3_{4,5,6,7} )
 #CMAKE_IN_SOURCE_BUILD=1
 
 inherit llvm flag-o-matic python-r1 virtualx cmake-utils
