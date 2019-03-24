@@ -2,7 +2,7 @@
 
 EAPI=6
 
-PYTHON_COMPAT=( python3_{4,5,6,7} )
+PYTHON_COMPAT=( python2_7 python3_{4,5,6,7} )
 #CMAKE_IN_SOURCE_BUILD=1
 
 inherit llvm flag-o-matic python-r1 virtualx cmake-utils
@@ -193,6 +193,7 @@ src_configure() {
 			-DBUILD_TESTS=$(usex test)
 			-DUSE_XVFB=$(usex test)
 			-DPYTHON_EXECUTABLE="${PYTHON}"
+			$(python_is_python3 || printf -- '-DPYTHON_CONFIG_SUFFIX=%s\n-DSHIBOKEN_PYTHON_CONFIG_SUFFIX=%s' "-${EPYTHON}" "-${EPYTHON}")
 			-DPYTHON_SITE_PACKAGES="$(python_get_sitedir)"
 			-DMODULES="$(pyside2_build_modules_list)"
 		)

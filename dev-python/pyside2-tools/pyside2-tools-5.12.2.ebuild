@@ -70,6 +70,7 @@ src_configure() {
 			# Broken cfgs from shiboken2, fix before slotting: -DENABLE_VERSION_SUFFIX=TRUE
 			-DBUILD_TESTS=$(usex test)
 			-DPYTHON_EXECUTABLE="${PYTHON}"
+			$(python_is_python3 || printf -- '-DPYTHON_CONFIG_SUFFIX=%s\n-DSHIBOKEN_PYTHON_CONFIG_SUFFIX=%s' "-${EPYTHON}" "-${EPYTHON}")
 			-DPYTHON_SITE_PACKAGES="$(python_get_sitedir)"
 		)
 
