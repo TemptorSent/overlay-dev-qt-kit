@@ -3,7 +3,7 @@
 EAPI=6
 
 CMAKE_IN_SOURCE_BUILD="1"
-PYTHON_COMPAT=( python3_{4,5,6,7} )
+PYTHON_COMPAT=( python2_7 python3_{4,5,6,7} )
 
 inherit cmake-utils python-r1 virtualx
 TARBALL="pyside-setup-everywhere-src-${PV}"
