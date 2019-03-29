@@ -5,7 +5,7 @@ EAPI=6
 CMAKE_IN_SOURCE_BUILD="1"
 PYTHON_COMPAT=( python2_7 python3_{4,5,6,7} )
 
-inherit cmake-utils python-r1 virtualx
+inherit cmake-utils python-r1 virtualx eapi7-ver
 TARBALL="pyside-setup-everywhere-src-${PV}"
 DESCRIPTION="PySide development tools (lupdate, rcc, uic)"
 HOMEPAGE="https://wiki.qt.io/PySide2"
@@ -15,7 +15,7 @@ SRC_URI="http://download.qt.io/official_releases/QtForPython/pyside2/PySide2-${P
 # under the BSD 3-clause and GPL v2 licenses, this appears to be an oversight;
 # all files in this (and every) directory are licensed only under the GPL v2.
 LICENSE="GPL-2"
-SLOT="2"
+SLOT="2/2.0.0"
 KEYWORDS="*"
 IUSE="test"
 REQUIRED_USE="${PYTHON_REQUIRED_USE}"
@@ -24,8 +24,8 @@ REQUIRED_USE="${PYTHON_REQUIRED_USE}"
 # "PySide2.QtWidgets" C extensions and hence requires "gui" and "widgets".
 RDEPEND="
 	${PYTHON_DEPS}
-	=dev-python/pyside2-${PV}:${SLOT}[gui,widgets,${PYTHON_USEDEP}]
-	=dev-python/shiboken2-${PV}:${SLOT}[${PYTHON_USEDEP}]
+	=dev-python/pyside2-${PV}:$(ver_cut 1-2)[gui,widgets,${PYTHON_USEDEP}]
+	=dev-python/shiboken2-${PV}:$(ver_cut 1-2)[${PYTHON_USEDEP}]
 	dev-qt/qtcore:5
 	dev-qt/qtgui:5
 	dev-qt/qtwidgets:5
@@ -70,7 +70,6 @@ src_configure() {
 			# Broken cfgs from shiboken2, fix before slotting: -DENABLE_VERSION_SUFFIX=TRUE
 			-DBUILD_TESTS=$(usex test)
 			-DPYTHON_EXECUTABLE="${PYTHON}"
-			$(python_is_python3 || printf -- '-DPYTHON_CONFIG_SUFFIX=%s\n-DSHIBOKEN_PYTHON_CONFIG_SUFFIX=%s' "-${EPYTHON}" "-${EPYTHON}")
 			-DPYTHON_SITE_PACKAGES="$(python_get_sitedir)"
 		)
 

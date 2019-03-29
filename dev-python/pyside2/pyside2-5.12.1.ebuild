@@ -3,9 +3,10 @@
 EAPI=6
 
 PYTHON_COMPAT=( python2_7 python3_{4,5,6,7} )
-#CMAKE_IN_SOURCE_BUILD=1
 
-inherit llvm flag-o-matic python-r1 virtualx cmake-utils
+CMAKE_MAKEFILE_GENERATOR=ninja
+
+inherit llvm flag-o-matic python-r1 virtualx cmake-utils eapi7-ver
 
 
 DESCRIPTION="Qt for Python - Python bindings for the Qt framework"
@@ -14,14 +15,13 @@ TARBALL="pyside-setup-everywhere-src-${PV}"
 # See "sources/pyside2/PySide2/licensecomment.txt" for licensing details.
 LICENSE="|| ( GPL-2 GPL-3+ LGPL-3 )"
 SRC_URI="http://download.qt.io/official_releases/QtForPython/pyside2/PySide2-${PV}-src/${TARBALL}.tar.xz"
-SLOT="2/2.0.0"
+SLOT="$(ver_cut 1-2)/${PV}"
 KEYWORDS="*"
-
 
 IUSE="3d charts +concurrent datavis3d declarative designer +gui help location multimedia
 	+network opengl positioning +printsupport script scripttools scxml sensors speech +sql svg
-	+testlib webchannel webengine webkit websockets +widgets +x11extras xmlpatterns"
-# Excluded until fixed: webkit
+	+testlib webchannel webengine websockets +widgets +x11extras xmlpatterns"
+# Excluded until webkit support is fixed: webkit
 
 # Note: 'testlib' for qttest used above due to name conflict with 'test' for running tests.
 IUSE="${IUSE} test"
@@ -57,11 +57,11 @@ REQUIRED_USE="
 	widgets? ( gui )
 	x11extras? ( gui )
 "
-# Excluded until fixed: webkit? ( gui network printsupport widgets )
+# Excluded until webkit support is fixed: webkit? ( gui network printsupport widgets )
 
 # Minimum version of Qt required, derived from the CMakeLists.txt line:
 #   find_package(Qt5 ${QT_PV} REQUIRED COMPONENTS Core)
-QT_PV="5.12.1:5"
+QT_PV="${PV}:5"
 
 CLANG_DEPS=">=sys-devel/clang-6"
 
@@ -103,7 +103,7 @@ DEPEND="
 		x11-apps/xhost
 	)
 "
-# Excluded until fixed: webkit? ( >=dev-qt/qtwebkit-${QT_PV}[printsupport] )
+# Excluded until webkit support is fixed: webkit? ( >=dev-qt/qtwebkit-${QT_PV}[printsupport] )
 
 RDEPEND="${DEPEND}"
 
@@ -123,6 +123,12 @@ QtTest testlib
 QtConcurrent concurrent
 QtX11Extras x11extras
 "
+# Exclude until webkit support is fixed
+#PYSIDE2_QT_PKGS_USE_WEBKIT="
+#QtWebKit webkit
+#QtWebKitWidgets webkit widgets
+#"
+
 PYSIDE2_QT_PKGS_USE_OPTIONAL="
 QtXml
 QtXmlPatterns xmlpatterns
@@ -148,8 +154,7 @@ QtWebChannel webchannel
 QtWebEngineCore webengine
 QtWebEngine webengine
 QtWebEngineWidgets webengine widgets
-QtWebKit webkit
-QtWebKitWidgets webkit widgets
+${PYSIDE2_QT_PKGS_USE_WEBKIT}
 QtWebSockets websockets
 Qt3DCore 3d
 Qt3DRender 3d
@@ -158,6 +163,7 @@ Qt3DLogic 3d
 Qt3DAnimation 3d
 Qt3DExtras 3d
 "
+
 
 PYSIDE2_QT_PKGS_USE="
 ${PYSIDE2_QT_PKGS_USE_ESSENTIAL}
@@ -174,13 +180,21 @@ src_prepare() {
 		sed -i -e '1iinclude(rpath.cmake)' CMakeLists.txt || die
 	fi
 
+	# Exclude until webkit support is fixed (appears to be bit-rot)
 	#if use webkit ; then
-	#	sed -e '/list(APPEND ALL_OPTIONAL_MODULES/ s/WebSockets/WebKit WebKitWidgets &/' \
-	#		-i CMakeLists.txt || die
-	#	sed -e '/value-type name="QWebDatabase"/ s/value-/object-/' \
-	#		-e '/value-type name="QWebHistoryItem"/ s/value-/object-/' \
-	#	-i PySide2/QtWebKitWidgets/typesystem_webkitwidgets.xml || die
-	#fi
+	if false ; then
+		# Reenabled WebKit and WebKitWidgets modules
+		sed -e '/list(APPEND ALL_OPTIONAL_MODULES/ s/WebSockets/WebKit WebKitWidgets &/' \
+			-i CMakeLists.txt || die
+		# Fix typesystem errors.
+		sed -e '/value-type name="QWebDatabase"/ s/value-/object-/' \
+			-e '/value-type name="QWebHistoryItem"/ s/value-/object-/' \
+			-i PySide2/QtWebKitWidgets/typesystem_webkitwidgets.xml || die
+		# Fix typos(?) in ingested glue file
+		sed -e '/for (auto it = %0.lowerBound(key), end = %0.upperBound(key); it ! = end; ++it) {/ { s/key/_&/g; s/! =/!=/ }' \
+			-e '/Shiboken::AutoDecRef _pyValue(%CONVERTTOPYTHON\[QString\](it.value));/ { s/it.value/it/; }' \
+			-i PySide2/glue/qtwebkitwidgets.cpp || die
+	fi
 
 	cmake-utils_src_prepare
 }
@@ -196,6 +210,20 @@ src_configure() {
 			-DPYTHON_SITE_PACKAGES="$(python_get_sitedir)"
 			-DMODULES="$(pyside2_build_modules_list)"
 		)
+
+		# Find the previously installed "Shiboken2Config.*.cmake" and
+		# "PySide2Config.*.cmake" files specific to this Python version.
+		if python_is_python3; then
+			# Extension tag unique to the current Python 3.x version (e.g.,
+			# ".cpython-34m" for CPython 3.4).
+			local EXTENSION_TAG="$("$(python_get_PYTHON_CONFIG)" --extension-suffix)"
+			EXTENSION_TAG="${EXTENSION_TAG%.so}"
+
+			mycmakeargs+=( -DPYTHON_CONFIG_SUFFIX="${EXTENSION_TAG}" )
+		else
+			mycmakeargs+=( -DPYTHON_CONFIG_SUFFIX="-python2.7" )
+		fi
+
 		cmake-utils_src_configure
 	}
 	python_foreach_impl configuration
